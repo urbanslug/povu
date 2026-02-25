@@ -1,6 +1,7 @@
-# === CMake Setup ===
+# ================================= CMake Setup ==============================
 # Minimum version required for FetchContent and modern features
 cmake_minimum_required(VERSION 3.14)
+
 
 # --- CMake Policy Handling ---
 # Suppress warnings in CMake 3.24+ about DOWNLOAD_EXTRACT_TIMESTAMP
@@ -9,17 +10,33 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
   cmake_policy(SET CMP0135 NEW)
 endif()
 
-option(ENABLE_CUDA "Enable CUDA acceleration (build CUDA targets)" ON)
-if(ENABLE_CUDA)
-  message(STATUS "CUDA support enabled")
-  set(MEZA_ENABLE_CUDA ON)
-else()
-  message(STATUS "CUDA support disabled")
-endif()
-#option(MEZA_BUILD_EXAMPLE "Build examples for meza" OFF)
 
-# === Project Metadata ===
-project(povu VERSION 0.0.1 LANGUAGES C CXX)
+# ========================= Build Configuration Options =====================
+
+option(MEZA_ENABLE_CUDA "Enable CUDA acceleration (build CUDA targets)" OFF)
+if(MEZA_ENABLE_CUDA)
+  message(STATUS "CUDA support enabled")
+endif()
+
+option(MEZA_BUILD_EXAMPLE "Build examples" OFF)
+if (MEZA_BUILD_EXAMPLE)
+  message(STATUS "Build examples.")
+else()
+  message(STATUS "Not building examples.")
+endif()
+
+# enable or disable testing. OFF by default
+option(MEZA_ENABLE_TESTS "Build tests" OFF)
+if (MEZA_ENABLE_TESTS)
+  message(STATUS "Testing is enabled.")
+else()
+  message(STATUS "Testing is disabled.")
+endif()
+
+
+# ============================ Project Definition ===========================
+project(meza VERSION 0.0.1 LANGUAGES CXX)
+
 
 # === C++ Standard Configuration ===
 set(CMAKE_CXX_STANDARD 17)
@@ -30,22 +47,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 
-# === Build Configuration Options ===
+if(MEZA_ENABLE_CUDA)
+  enable_language(CUDA)
 
-# Optional testing toggle.
-# Enable with -DPOVU_ENABLE_TESTING=ON
-# This will build and run tests using GoogleTest.
-#option(POVU_ENABLE_TESTING "Build and run tests" OFF)
-option(ENABLE_ALL_TESTS "Enable all tests (including dependencies)" OFF)
-#option(ENABLE_TESTS "Enable CTest testing framework" ON)
-if(ENABLE_ALL_TESTS)
-  message(STATUS "Testing internal deps")
+  # Prefer the modern package when available
+  find_package(CUDAToolkit REQUIRED)
 
-  set(TEST_MEZA ON)
-  set(TEST_OZA ON)
+  set(CMAKE_CUDA_STANDARD 17)
+  set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 endif()
 
-# --- Build Type Defaults ---
 # Default to Release if user hasn't set a build type
 # Can be overridden via -DCMAKE_BUILD_TYPE=Debug
 if(NOT CMAKE_BUILD_TYPE)
@@ -102,8 +113,6 @@ set(DEBUG_WARNINGS
   -Wmissing-field-initializers
   -Wunused-local-typedefs
   -Wuninitialized
-  # -Wmaybe-uninitialized
-  # -Wpadded # Uncomment or gate by compiler if needed
 )
 
 # Add GCC-specific warnings
@@ -138,130 +147,107 @@ endif()
 # This file typically enables AddressSanitizer, UndefinedBehaviorSanitizer, etc.
 # It's included unconditionally, but should internally check for Debug mode and compiler support.
 # sanitizers.cmake checks if build mode is Debug and if not it returns early.
-include(cmake/sanitizers.cmake)
+#include(cmake/sanitizers.cmake)
 
 # --- Depds from CPM.cmake --
-include(cmake/deps.cmake)
+#include(cmake/deps.cmake)
 
+# ============================ config =============================
 
+# These variables define paths for source code, headers, and tests.
+# Used later in the project to organize sources and targets.
+
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+set(MEZA_SOURCES_DIR ${SRC_DIR}/meza)
+set(EXAMPLES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/examples)
 
-add_subdirectory(quilt)
-add_subdirectory(meza)
+#  ........ Define the library target ............
 
-target_link_libraries(meza
+ADD_LIBRARY(meza
+  ${MEZA_SOURCES_DIR}/ops/ops.cpp
+  ${MEZA_SOURCES_DIR}/pool/hap_comp.cpp
+  ${MEZA_SOURCES_DIR}/pool/pool_ops.cpp
+  ${MEZA_SOURCES_DIR}/owned/matrix.cpp
+)
+
+set_target_properties(meza PROPERTIES
+  POSITION_INDEPENDENT_CODE ON
+)
+
+target_compile_definitions(meza PUBLIC
+  $<$<CONFIG:Debug>:MEZA_DEBUG=1>
+  $<$<CONFIG:Release>:MEZA_RELEASE=1>
+  $<$<CONFIG:RelWithDebInfo>:MEZA_RELWITHDEBINFO=1>
+  $<$<CONFIG:MinSizeRel>:MEZA_MINSIZEREL=1>
+)
+
+target_compile_options(meza PRIVATE
+  $<$<COMPILE_LANGUAGE:C>:${COMMON_WARNINGS}>
+  $<$<COMPILE_LANGUAGE:CXX>:${COMMON_WARNINGS}>
+
+  $<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:C>>:${DEBUG_WARNINGS}>
+  $<$<AND:$<CONFIG:Debug>,$<COMPILE_LANGUAGE:CXX>>:${DEBUG_WARNINGS}>
+
+  $<$<CONFIG:Debug>:-g>
+  $<$<CONFIG:Release>:-O3>
+)
+
+target_include_directories(meza
   PUBLIC
-  quilt)
-
-add_subdirectory(log)
-add_subdirectory(liteseq)
-
-# --- Silence compiler warnings for dependencies ---
-function(silence_warnings target)
-  if(TARGET ${target})
-    get_target_property(type ${target} TYPE)
-    if(type STREQUAL "INTERFACE_LIBRARY")
-      target_compile_options(${target} INTERFACE -w)
-    else()
-      target_compile_options(${target} PRIVATE -w)
-    endif()
-  endif()
-endfunction()
-
-silence_warnings(log)
-target_link_libraries(liteseq PRIVATE log)
-
-add_subdirectory(dynamo)
-add_subdirectory(oza)
-add_subdirectory(ita)
-add_subdirectory(mto)
-add_subdirectory(zien)
-add_subdirectory(povu)
-
-function(add_compile_options_for_build_type target)
-  if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(${target} PRIVATE
-      ${COMMON_WARNINGS}
-      ${DEBUG_WARNINGS}
-      -g -Wno-system-headers)
-    target_compile_definitions(${target} PRIVATE DEBUG)
-  elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(${target} PRIVATE
-      ${COMMON_WARNINGS}
-      -O3 -Wno-system-headers)
-    target_compile_definitions(${target} PRIVATE RELEASE)
-  endif()
-endfunction()
-
-add_compile_options_for_build_type(povu)
-add_compile_options_for_build_type(oza)
-
-target_link_libraries(quilt
-  INTERFACE
-  fmt::fmt
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(oza
-  PRIVATE
-  fmt::fmt # formatting
-  liteseq  # gfa handling
-  quilt
-  meza
+# ---- linking -----
+
+if(MEZA_ENABLE_CUDA)
+  enable_language(CUDA)
+  find_package(CUDAToolkit REQUIRED)
+
+  target_sources(meza PRIVATE
+    ${MEZA_SOURCES_DIR}/info.cu
+    ${MEZA_SOURCES_DIR}/ops/ops.cu
+  )
+
+  target_link_libraries(meza PRIVATE CUDA::cudart)
+
+  # TODO: make this PRIVATE
+  target_include_directories(meza INTERFACE
+    ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+  )
+
+  target_compile_options(meza PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=-Wno-pedantic>
+  )
+
+  set_source_files_properties(
+    ${MEZA_SOURCES_DIR}/mat.cu
+    ${MEZA_SOURCES_DIR}/info.cu
+    ${MEZA_SOURCES_DIR}/ops/ops.cu
+    PROPERTIES LANGUAGE CUDA
+  )
+endif()
+
+target_compile_definitions(meza
+  PUBLIC
+  MEZA_USE_CUDA=$<BOOL:${MEZA_ENABLE_CUDA}>
 )
 
-target_link_libraries(ita
-  PRIVATE
-  oza
-  fmt::fmt     # formatting
-  liteseq      # gfa handling
-  meza
-  dynamo
-)
+# ============================= Tests =====================================
 
-target_link_libraries(mto
-  PRIVATE
-  oza
-  fmt::fmt     # formatting
-  liteseq      # gfa handling
-  ita
-  meza
-)
+if(TEST_MEZA)
+  message(STATUS "Tests enabled for meza")
+  # Add the global TESTING definition
+  add_compile_definitions(TESTING)
 
-target_link_libraries(zien
-  PRIVATE
-  oza
-  ita
-  liteseq      # gfa handling
-  fmt::fmt     # formatting
-  ncurses
-  meza
-)
+  enable_testing()
+  add_subdirectory(${TESTS_DIR})
+endif()
 
-target_link_libraries(povu
-  PRIVATE
-
-  # internal libraries
-  oza
-  zien
-  ita
-  mto
-
-  # external libraries
-  liteseq      # gfa handling
-  fmt::fmt     # formatting
-  taywee::args # argument parsing
-  ncurses
-  meza
-)
-
-
-# # =================== Set Build-Time Output Directory ========================
-
-# Set the runtime output directory for the binary
-set_target_properties(povu PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR}
-)
-message(STATUS "Build-time binary output directory: ${BIN_DIR}")
-
-# ============================ Testing Configuration ===========================
-include(CTest)
+# === Example Binary ===
+if(MEZA_BUILD_EXAMPLE)
+  add_subdirectory(${EXAMPLES_DIR})
+endif()

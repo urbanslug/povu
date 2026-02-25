@@ -1,6 +1,5 @@
 # === CMake Setup ===
-# Minimum version required for FetchContent and modern features
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.14) # Minimum version required for FetchContent and modern features
 
 # --- CMake Policy Handling ---
 # Suppress warnings in CMake 3.24+ about DOWNLOAD_EXTRACT_TIMESTAMP
@@ -9,17 +8,8 @@ if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
   cmake_policy(SET CMP0135 NEW)
 endif()
 
-option(ENABLE_CUDA "Enable CUDA acceleration (build CUDA targets)" ON)
-if(ENABLE_CUDA)
-  message(STATUS "CUDA support enabled")
-  set(MEZA_ENABLE_CUDA ON)
-else()
-  message(STATUS "CUDA support disabled")
-endif()
-#option(MEZA_BUILD_EXAMPLE "Build examples for meza" OFF)
-
 # === Project Metadata ===
-project(povu VERSION 0.0.1 LANGUAGES C CXX)
+project(zien VERSION 0.0.1 LANGUAGES C CXX)
 
 # === C++ Standard Configuration ===
 set(CMAKE_CXX_STANDARD 17)
@@ -35,15 +25,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Optional testing toggle.
 # Enable with -DPOVU_ENABLE_TESTING=ON
 # This will build and run tests using GoogleTest.
-#option(POVU_ENABLE_TESTING "Build and run tests" OFF)
-option(ENABLE_ALL_TESTS "Enable all tests (including dependencies)" OFF)
-#option(ENABLE_TESTS "Enable CTest testing framework" ON)
-if(ENABLE_ALL_TESTS)
-  message(STATUS "Testing internal deps")
-
-  set(TEST_MEZA ON)
-  set(TEST_OZA ON)
-endif()
+# option(POVU_ENABLE_TESTING "Build and run tests" OFF)
 
 # --- Build Type Defaults ---
 # Default to Release if user hasn't set a build type
@@ -138,130 +120,58 @@ endif()
 # This file typically enables AddressSanitizer, UndefinedBehaviorSanitizer, etc.
 # It's included unconditionally, but should internally check for Debug mode and compiler support.
 # sanitizers.cmake checks if build mode is Debug and if not it returns early.
-include(cmake/sanitizers.cmake)
+include(../cmake/sanitizers.cmake)
 
 # --- Depds from CPM.cmake --
-include(cmake/deps.cmake)
+include(../cmake/deps.cmake)
+
+# ============================ povu config =============================
+
+# These variables define paths for source code, headers, and tests.
+# Used later in the project to organize sources and targets.
+set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+#set(POVULIB_SOURCES_DIR ${SRC_DIR}/povu)
+set(ZIEN_SOURCES_DIR ${SRC_DIR}/zien)
+
+# When set uses uses build dir for output binaries
+# set(BIN_DIR ${CMAKE_BINARY_DIR}/bin)
+
+# -------- povu Library & executable ----------------
+#
+# Build the core 'povulib' library, composed of implementation files from various modules.
+# This library contains the core algorithms, data structures, and utilities used by povu.
+# The library is built from the source files located in the 'include' directory.
+
+#  ........ Define the library target ............
 
 
-set(BIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+ADD_LIBRARY(zien
+  ${ZIEN_SOURCES_DIR}/tui/tui.cpp
+  ${ZIEN_SOURCES_DIR}/tui/state.cpp
+  ${ZIEN_SOURCES_DIR}/tui/input.cpp
 
-add_subdirectory(quilt)
-add_subdirectory(meza)
+  #common
+  ${ZIEN_SOURCES_DIR}/common/common.cpp
 
-target_link_libraries(meza
+  #components
+  ${ZIEN_SOURCES_DIR}/components/repeats.cpp
+  ${ZIEN_SOURCES_DIR}/components/common.cpp
+  ${ZIEN_SOURCES_DIR}/components/genotypes.cpp
+  ${ZIEN_SOURCES_DIR}/components/refs.cpp
+  ${ZIEN_SOURCES_DIR}/components/alts.cpp
+  ${ZIEN_SOURCES_DIR}/components/paths.cpp
+  ${ZIEN_SOURCES_DIR}/components/vcf.cpp
+
+  #validate
+  ${ZIEN_SOURCES_DIR}/validate/validate.cpp
+
+  #repeats
+  ${ZIEN_SOURCES_DIR}/repeats/repeats.cpp
+)
+
+target_include_directories(zien
   PUBLIC
-  quilt)
-
-add_subdirectory(log)
-add_subdirectory(liteseq)
-
-# --- Silence compiler warnings for dependencies ---
-function(silence_warnings target)
-  if(TARGET ${target})
-    get_target_property(type ${target} TYPE)
-    if(type STREQUAL "INTERFACE_LIBRARY")
-      target_compile_options(${target} INTERFACE -w)
-    else()
-      target_compile_options(${target} PRIVATE -w)
-    endif()
-  endif()
-endfunction()
-
-silence_warnings(log)
-target_link_libraries(liteseq PRIVATE log)
-
-add_subdirectory(dynamo)
-add_subdirectory(oza)
-add_subdirectory(ita)
-add_subdirectory(mto)
-add_subdirectory(zien)
-add_subdirectory(povu)
-
-function(add_compile_options_for_build_type target)
-  if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    target_compile_options(${target} PRIVATE
-      ${COMMON_WARNINGS}
-      ${DEBUG_WARNINGS}
-      -g -Wno-system-headers)
-    target_compile_definitions(${target} PRIVATE DEBUG)
-  elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
-    target_compile_options(${target} PRIVATE
-      ${COMMON_WARNINGS}
-      -O3 -Wno-system-headers)
-    target_compile_definitions(${target} PRIVATE RELEASE)
-  endif()
-endfunction()
-
-add_compile_options_for_build_type(povu)
-add_compile_options_for_build_type(oza)
-
-target_link_libraries(quilt
-  INTERFACE
-  fmt::fmt
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
-
-target_link_libraries(oza
-  PRIVATE
-  fmt::fmt # formatting
-  liteseq  # gfa handling
-  quilt
-  meza
-)
-
-target_link_libraries(ita
-  PRIVATE
-  oza
-  fmt::fmt     # formatting
-  liteseq      # gfa handling
-  meza
-  dynamo
-)
-
-target_link_libraries(mto
-  PRIVATE
-  oza
-  fmt::fmt     # formatting
-  liteseq      # gfa handling
-  ita
-  meza
-)
-
-target_link_libraries(zien
-  PRIVATE
-  oza
-  ita
-  liteseq      # gfa handling
-  fmt::fmt     # formatting
-  ncurses
-  meza
-)
-
-target_link_libraries(povu
-  PRIVATE
-
-  # internal libraries
-  oza
-  zien
-  ita
-  mto
-
-  # external libraries
-  liteseq      # gfa handling
-  fmt::fmt     # formatting
-  taywee::args # argument parsing
-  ncurses
-  meza
-)
-
-
-# # =================== Set Build-Time Output Directory ========================
-
-# Set the runtime output directory for the binary
-set_target_properties(povu PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY ${BIN_DIR}
-)
-message(STATUS "Build-time binary output directory: ${BIN_DIR}")
-
-# ============================ Testing Configuration ===========================
-include(CTest)
