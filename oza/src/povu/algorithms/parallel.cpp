@@ -4,23 +4,24 @@
 #include <string> // for basic_string, string
 #include <vector> // for vector
 
-#include "fmt/core.h"		  // for format
-#include "povu/common/compat.hpp" // for format, pv_cmp
-#include "povu/common/core.hpp"	  // for idx_t, pt
+#include <quilt/graph_types.hpp> // for v_end_e, side_n_id_t, side_n_idx_t
+#include <quilt/shim.hpp>	 // for format
+#include <quilt/types.hpp>	 // for qt
 
 namespace oza::parallel
 {
+namespace pgt = quilt::types::graph;
 
-bool inspect_trunk(const pst::Tree &st, pt::idx_t ai, pt::idx_t zi)
+bool inspect_trunk(const pst::Tree &st, qt::idx_t ai, qt::idx_t zi)
 {
-	const std::string fn_name{pv_cmp::format("[{}::{}]", MODULE, __func__)};
+	const std::string fn_name{qs::format("[{}::{}]", MODULE, __func__)};
 
 	// bool dbg = (ai == 1338 && zi == 1343) ? true : false;
 
 	// go up from zi to ai and ensure no branching vertices
 	auto cond_a = [&]() -> bool
 	{
-		pt::idx_t v_idx = zi;
+		qt::idx_t v_idx = zi;
 		while (v_idx != ai) {
 			if (st.get_child_count(v_idx) > 1) {
 				return false;
@@ -33,8 +34,8 @@ bool inspect_trunk(const pst::Tree &st, pt::idx_t ai, pt::idx_t zi)
 
 	auto cond_b = [&]() -> bool
 	{
-		pt::idx_t branching_vtx{pc::INVALID_IDX};
-		pt::idx_t v_idx = zi;
+		qt::idx_t branching_vtx{pc::INVALID_IDX};
+		qt::idx_t v_idx = zi;
 
 		while (v_idx != ai) {
 			if (st.get_child_count(v_idx) > 1) {
@@ -65,7 +66,7 @@ bool inspect_trunk(const pst::Tree &st, pt::idx_t ai, pt::idx_t zi)
 		//  }
 		//}
 
-		for (pt::idx_t c_v_idx : st.get_children(branching_vtx)) {
+		for (qt::idx_t c_v_idx : st.get_children(branching_vtx)) {
 			// if(dbg ) {
 			//   std::cerr << "c " << c_v_idx << " id "
 			//             << st.get_vertex(c_v_idx).g_v_id() << "
@@ -97,10 +98,10 @@ bool inspect_trunk(const pst::Tree &st, pt::idx_t ai, pt::idx_t zi)
 
 bool in_trunk(const pst::Tree &st, const pvst::Flubble &ft_v)
 {
-	const std::string fn_name{pv_cmp::format("[{}::{}]", MODULE, __func__)};
+	const std::string fn_name{qs::format("[{}::{}]", MODULE, __func__)};
 
-	pt::idx_t ai = ft_v.get_ai();
-	pt::idx_t zi = ft_v.get_zi();
+	qt::idx_t ai = ft_v.get_ai();
+	qt::idx_t zi = ft_v.get_zi();
 
 	// if (zi < 3) {
 	//   return false;
@@ -123,7 +124,7 @@ bool in_trunk(const pst::Tree &st, const pvst::Flubble &ft_v)
 
 	// with ai
 	{
-		pt::idx_t be_count{};
+		qt::idx_t be_count{};
 		// count OBE(zi) \ capping be
 		// for (auto be_idx : st.get_obe_idxs(zi)) {
 		//   const pst::BackEdge &be = st.get_be(be_idx);
@@ -156,7 +157,7 @@ bool in_trunk(const pst::Tree &st, const pvst::Flubble &ft_v)
 
 	// with zi
 	{
-		pt::idx_t be_count{};
+		qt::idx_t be_count{};
 		// count IBE(ai) \ capping be
 		for (auto be_idx : st.get_ibe_idxs(ai)) {
 			const pst::BackEdge &be = st.get_be(be_idx);
@@ -193,10 +194,10 @@ bool in_trunk(const pst::Tree &st, const pvst::Flubble &ft_v)
 bool in_branch(const pst::Tree &st, const ptu::tree_meta &tm,
 	       const pvst::Flubble &ft_v)
 {
-	const std::string fn_name{pv_cmp::format("[{}::{}]", MODULE, __func__)};
+	const std::string fn_name{qs::format("[{}::{}]", MODULE, __func__)};
 
-	pt::idx_t ai = ft_v.get_ai();
-	pt::idx_t zi = ft_v.get_zi();
+	qt::idx_t ai = ft_v.get_ai();
+	qt::idx_t zi = ft_v.get_zi();
 
 	// if (zi < 3) {
 	//   return false;
@@ -207,8 +208,8 @@ bool in_branch(const pst::Tree &st, const ptu::tree_meta &tm,
 	}
 
 	// ensure only 1 gray child from zi
-	pt::idx_t c_idx{pc::INVALID_IDX};
-	for (pt::idx_t e_idx : st.get_child_edge_idxs(zi)) {
+	qt::idx_t c_idx{pc::INVALID_IDX};
+	for (qt::idx_t e_idx : st.get_child_edge_idxs(zi)) {
 		const pst::Edge &e = st.get_tree_edge(e_idx);
 		if (e.get_color() == pgt::color_e::black) {
 			continue;
@@ -222,8 +223,8 @@ bool in_branch(const pst::Tree &st, const ptu::tree_meta &tm,
 		c_idx = e.get_child_v_idx();
 	}
 
-	pt::idx_t br_count = tm.get_brackets(c_idx).size();
-	pt::idx_t ch_obe_count = st.get_obe_idxs(c_idx).size();
+	qt::idx_t br_count = tm.get_brackets(c_idx).size();
+	qt::idx_t ch_obe_count = st.get_obe_idxs(c_idx).size();
 
 	if (br_count <= 2) {
 		return false;
@@ -231,7 +232,7 @@ bool in_branch(const pst::Tree &st, const ptu::tree_meta &tm,
 
 	// with ai
 	{
-		pt::idx_t be_count{};
+		qt::idx_t be_count{};
 		// count IBE(ai) \ capping be
 		for (auto be_idx : st.get_ibe_idxs(ai)) {
 			const pst::BackEdge &be = st.get_be(be_idx);
@@ -249,7 +250,7 @@ bool in_branch(const pst::Tree &st, const ptu::tree_meta &tm,
 
 	// with zi
 	{
-		pt::idx_t be_count{};
+		qt::idx_t be_count{};
 		be_count = st.get_obe_idxs(zi).size(); // reset be_count
 
 		if (be_count >= br_count + ch_obe_count) {
@@ -263,9 +264,9 @@ bool in_branch(const pst::Tree &st, const ptu::tree_meta &tm,
 void find_parallel(const pst::Tree &st, pvst::Tree &ft,
 		   const ptu::tree_meta &tm)
 {
-	const std::string fn_name{pv_cmp::format("[{}::{}]", MODULE, __func__)};
+	const std::string fn_name{qs::format("[{}::{}]", MODULE, __func__)};
 
-	for (pt::idx_t ft_v_idx{}; ft_v_idx < ft.vtx_count(); ft_v_idx++) {
+	for (qt::idx_t ft_v_idx{}; ft_v_idx < ft.vtx_count(); ft_v_idx++) {
 		if (!ft.is_leaf(ft_v_idx)) {
 			continue;
 		}

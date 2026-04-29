@@ -4,12 +4,11 @@
 #include <string>   // for basic_string, operator<<, string
 #include <vector>   // for vector
 
-#include <fmt/core.h> // for format
+#include <quilt/shim.hpp>  // for format
+#include <quilt/types.hpp> // for qt
 
 #include "mto/from_gfa.hpp" // for to_bd
 
-#include "povu/common/compat.hpp"    // for format, pv_cmp
-#include "povu/common/core.hpp"	     // for idx_t, pt
 #include "povu/graph/bidirected.hpp" // for VG
 
 namespace povu::subcommands::info
@@ -17,7 +16,7 @@ namespace povu::subcommands::info
 
 void do_info(const core::config &app_config)
 {
-	std::string fn_name = pv_cmp::format("[povu::main::{}]", __func__);
+	std::string fn_name = qs::format("[povu::main::{}]", __func__);
 
 	// -----
 	// read the input gfa into a bidirected variation graph
@@ -29,10 +28,10 @@ void do_info(const core::config &app_config)
 
 	delete g;
 
-	std::cerr << pv_cmp::format("{} Component count {}\n", fn_name,
-				    components.size());
+	std::cerr << qs::format("{} Component count {}\n", fn_name,
+				components.size());
 
-	for (pt::idx_t i{}; i < components.size(); ++i) {
+	for (qt::idx_t i{}; i < components.size(); ++i) {
 		bd::VG *c = components[i];
 		c->summary(app_config.print_tips());
 		delete c;

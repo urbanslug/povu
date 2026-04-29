@@ -3,24 +3,25 @@
 #include <sstream> // for basic_ostringstream
 #include <sys/types.h>
 
-#include "fmt/core.h" // for format
+#include <quilt/graph_types.hpp> // for v_end_e, side_n_id_t, side_n_idx_t
+#include <quilt/shim.hpp>	 // for format
+#include <quilt/types.hpp>	 // for qt
 
 #include "ita/variation/rov.hpp" // for var_type_e
-				 //
-#include "povu/common/core.hpp"	 // for pt
-#include "povu/refs/refs.hpp"	 // for Ref, pr
+
+#include "povu/refs/refs.hpp" // for Ref, pr
 
 namespace mto::to_vcf
 {
-namespace pgt = povu::types::graph;
+namespace pgt = quilt::types::graph;
 
 constexpr std::string_view VCF_VERSION = "4.2";
 
 void write_header_common(std::ostream &os)
 {
 	// clang-format off
-	os << pv_cmp::format("##fileformat=VCFv{}\n", VCF_VERSION);
-	os << pv_cmp::format("##fileDate={}\n", pu::today());
+	os << qs::format("##fileformat=VCFv{}\n", VCF_VERSION);
+	os << qs::format("##fileDate={}\n", pu::today());
 	os << "##source=povu\n";
 	os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
 	os << "##INFO=<ID=AC,Number=A,Type=Integer,Description=\"Total number of alternate alleles in called genotypes\">\n";
@@ -40,8 +41,8 @@ void write_header_common(std::ostream &os)
 
 void write_header_contig_line(const pr::Ref &r, std::ostream &os)
 {
-	os << pv_cmp::format("##contig=<ID={},length={}>\n", r.tag(),
-			     r.get_length());
+	os << qs::format("##contig=<ID={},length={}>\n", r.tag(),
+			 r.get_length());
 }
 
 void write_col_header(const std::vector<std::string> &genotype_col_names,
@@ -64,8 +65,8 @@ void init_vcfs(bd::VG &g, const std::vector<std::string> &ref_name_prefixes,
 	// add contig lines
 	for (const auto &rn_pref : ref_name_prefixes) {
 		std::ostream &os = vout.stream_for_ref_label(rn_pref);
-		std::set<pt::id_t> ref_ids = g.get_refs_in_sample(rn_pref);
-		for (pt::id_t ref_id : ref_ids) {
+		std::set<qt::id_t> ref_ids = g.get_refs_in_sample(rn_pref);
+		for (qt::id_t ref_id : ref_ids) {
 			const pr::Ref &ref = g.get_ref_by_id(ref_id);
 			write_header_contig_line(ref, os);
 		}

@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
-#include <vector>
+// #include <vector>
+
+#include <quilt/graph_types.hpp> // for v_end_e, side_n_id_t, side_n_idx_t
+#include <quilt/types.hpp>	 // for qt
 
 #include "povu/algorithms/flubbles.hpp"
 #include "povu/common/app.hpp"
@@ -8,6 +11,7 @@
 #include "povu/graph/spanning_tree.hpp"
 
 namespace pfl = oza::flubbles;
+using namespace quilt::types::graph;
 
 bd::VG *create_test_vg()
 {
@@ -23,17 +27,17 @@ bd::VG *create_test_vg()
 	vg->add_vertex(7, "C");
 
 	// Add edges
-	vg->add_edge(1, bd::v_end_e::r, 3, bd::v_end_e::l);
+	vg->add_edge(1, v_end_e::r, 3, v_end_e::l);
 
-	vg->add_edge(1, bd::v_end_e::r, 4, bd::v_end_e::l);
-	vg->add_edge(2, bd::v_end_e::r, 4, bd::v_end_e::l);
-	vg->add_edge(3, bd::v_end_e::r, 4, bd::v_end_e::l);
-	vg->add_edge(3, bd::v_end_e::l, 2, bd::v_end_e::l);
-	vg->add_edge(4, bd::v_end_e::r, 5, bd::v_end_e::l);
-	vg->add_edge(4, bd::v_end_e::r, 6, bd::v_end_e::l);
-	vg->add_edge(4, bd::v_end_e::l, 7, bd::v_end_e::l);
-	vg->add_edge(5, bd::v_end_e::r, 6, bd::v_end_e::l);
-	vg->add_edge(6, bd::v_end_e::r, 7, bd::v_end_e::l);
+	vg->add_edge(1, v_end_e::r, 4, v_end_e::l);
+	vg->add_edge(2, v_end_e::r, 4, v_end_e::l);
+	vg->add_edge(3, v_end_e::r, 4, v_end_e::l);
+	vg->add_edge(3, v_end_e::l, 2, v_end_e::l);
+	vg->add_edge(4, v_end_e::r, 5, v_end_e::l);
+	vg->add_edge(4, v_end_e::r, 6, v_end_e::l);
+	vg->add_edge(4, v_end_e::l, 7, v_end_e::l);
+	vg->add_edge(5, v_end_e::r, 6, v_end_e::l);
+	vg->add_edge(6, v_end_e::r, 7, v_end_e::l);
 
 	return vg;
 }
@@ -70,7 +74,7 @@ TEST(PVSTTest, VertexCount)
 {
 	pvst::Tree pvst = decompose_and_cleanup();
 
-	const pt::idx_t EXPECTED_PVST_VTX_COUNT = 3;
+	const qt::idx_t EXPECTED_PVST_VTX_COUNT = 3;
 	EXPECT_EQ(pvst.vtx_count(), EXPECTED_PVST_VTX_COUNT);
 }
 
@@ -80,7 +84,7 @@ TEST(PVSTTest, HasVertices)
 
 	std::set<std::string> expected_labels = {".", ">1>7", ">4>6"};
 
-	for (pt::idx_t i = 0; i < pvst.vtx_count(); ++i) {
+	for (qt::idx_t i = 0; i < pvst.vtx_count(); ++i) {
 		const pvst::VertexBase &v = pvst.get_vertex(i);
 		EXPECT_TRUE(expected_labels.find(v.as_str()) !=
 			    expected_labels.end());
@@ -93,10 +97,10 @@ TEST(PVSTTest, VertexHierarchy)
 
 	std::set<std::string> expected_labels = {".", ">1>7", ">4>6"};
 
-	for (pt::idx_t i = 0; i < pvst.vtx_count(); ++i) {
+	for (qt::idx_t i = 0; i < pvst.vtx_count(); ++i) {
 		const pvst::VertexBase &v = pvst.get_vertex(i);
 
-		const std::vector<pt::idx_t> &children = pvst.get_children(i);
+		const std::vector<qt::idx_t> &children = pvst.get_children(i);
 
 		if (v.as_str() == ".") {
 			EXPECT_EQ(pvst.root_idx(), i);

@@ -1,7 +1,7 @@
 #ifndef ZIEN_COMPONENTS_HPP
 #define ZIEN_COMPONENTS_HPP
 
-#include <iostream>
+// #include <iostream>
 #include <map>
 #include <set>
 #include <sstream>
@@ -10,25 +10,28 @@
 
 #include <ncurses.h>
 
-#include "povu/common/compat.hpp" // for pv_cmp
-#include "zien/tui/state.hpp"	  // for Mode
+#include <quilt/shim.hpp>  // for format
+#include <quilt/types.hpp> // for qt
+
+// #include "povu/common/compat.hpp" // for pv_cmp
+#include "zien/tui/state.hpp" // for Mode
 
 namespace zien::components
 {
 using namespace zien::tui::state;
 
 struct line_metadata {
-	pt::u32 ref_name_pos;
-	std::vector<pt::slice> at_str_slices; // allele traversal string slices
+	qt::u32 ref_name_pos;
+	std::vector<qt::slice> at_str_slices; // allele traversal string slices
 };
 
 // the lines to display in a given pane
 struct display_lines {
 	std::vector<std::string> lines;	 // all lines to display
-	std::set<pt::u32> special_lines; // lines to highlight (error lines)
-	std::map<pt::u32, line_metadata> meta; // all lines metadata
-	std::set<pt::u32> group_lines;	       // lines that start new groups
-	pt::u32 lh = 0;			       // longest header or label width
+	std::set<qt::u32> special_lines; // lines to highlight (error lines)
+	std::map<qt::u32, line_metadata> meta; // all lines metadata
+	std::set<qt::u32> group_lines;	       // lines that start new groups
+	qt::u32 lh = 0;			       // longest header or label width
 
 	void reset()
 	{
@@ -147,10 +150,10 @@ struct Pane {
 		if (pd.lines.empty())
 			return;
 
-		pt::u32 min_idx = has_header ? 1 : 0;
-		pt::u32 max_idx = pd.lines.size() - 1;
+		qt::u32 min_idx = has_header ? 1 : 0;
+		qt::u32 max_idx = pd.lines.size() - 1;
 
-		if ((pt::u32)selected_line < max_idx)
+		if ((qt::u32)selected_line < max_idx)
 			selected_line++;
 		else
 			selected_line = min_idx;
@@ -161,10 +164,10 @@ struct Pane {
 		if (pd.lines.empty())
 			return;
 
-		pt::u32 min_idx = has_header ? 1 : 0;
-		pt::u32 max_idx = pd.lines.size() - 1;
+		qt::u32 min_idx = has_header ? 1 : 0;
+		qt::u32 max_idx = pd.lines.size() - 1;
 
-		if ((pt::u32)selected_line > min_idx)
+		if ((qt::u32)selected_line > min_idx)
 			selected_line--;
 		else
 			selected_line = max_idx;
@@ -235,8 +238,8 @@ struct Pane {
 
 		while (current_data_idx < (int)lines.size()) {
 			int rows_for_this_item =
-				pv_cmp::contains(pd.group_lines,
-						 (pt::u32)current_data_idx)
+				qs::contains(pd.group_lines,
+					     (qt::u32)current_data_idx)
 					? 2
 					: 1;
 
@@ -256,7 +259,7 @@ struct Pane {
 		     i < (int)lines.size() && y_occupied < body_h; ++i) {
 
 			// A. Handle Separator
-			if (pv_cmp::contains(pd.group_lines, (pt::u32)i)) {
+			if (qs::contains(pd.group_lines, (qt::u32)i)) {
 				// If the scroll offset is inside the
 				// separator/line pair, we might skip the
 				// separator
@@ -338,7 +341,7 @@ struct Pane {
 					for (int j = 0;
 					     j < (int)display_str.length();
 					     ++j) {
-						pt::u32 global_char_pos =
+						qt::u32 global_char_pos =
 							meta.ref_name_pos +
 							horiz_offset + j;
 						bool dim = true;
@@ -373,8 +376,8 @@ struct Pane {
 								  safe_w)
 						: "";
 
-				bool is_special = pv_cmp::contains(
-					pd.special_lines, (pt::u32)i);
+				bool is_special = qs::contains(pd.special_lines,
+							       (qt::u32)i);
 
 				if (is_special && !is_selected)
 					wattron(win, COLOR_PAIR(4));
@@ -413,7 +416,7 @@ struct pane_params {
 	Pane &p;
 	bool has_header = false;
 	bool sep_cols = false;
-	pt::u32 selected_line = 0;
+	qt::u32 selected_line = 0;
 };
 
 // status bar or modeline
@@ -481,7 +484,7 @@ struct status_bar {
 		mvprintw(this->linum, 0, "%s", final_left.c_str());
 
 		// 5. Draw Middle (only if it fits)
-		std::string final_mid = pv_cmp::format(
+		std::string final_mid = qs::format(
 			"{} [{}]", mid, mode_names[state.current_mode]);
 
 		if (mid_pos > (int)final_left.length() + 1)

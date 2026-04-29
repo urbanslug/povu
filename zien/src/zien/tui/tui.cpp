@@ -6,10 +6,11 @@
 
 #include <ncurses.h>
 
-#include <liteseq/refs.h> // for ref_walk, ref
+#include <liteseq/refs.h>  // for ref_walk, ref
+#include <quilt/shim.hpp>  // for format
+#include <quilt/types.hpp> // for qt
 
 #include "mto/from_vcf.hpp"		  // for VCFile
-#include "povu/common/core.hpp"		  // for pt
 #include "povu/graph/bidirected.hpp"	  // for VG
 #include "zien/components/alts.hpp"	  // for update_alts
 #include "zien/components/components.hpp" // for status_bar
@@ -29,9 +30,9 @@ using namespace zien::tui::state;
 using namespace zien::tui::input;
 using namespace zien::components;
 
-const pt::u32 INITIAL_VCF_REC_IDX = 0; // skip header line
-const pt::u32 REPEATS_PANE_COUNT = 5;
-const pt::u32 NO_REPEATS_PANE_COUNT = 4;
+const qt::u32 INITIAL_VCF_REC_IDX = 0; // skip header line
+const qt::u32 REPEATS_PANE_COUNT = 5;
+const qt::u32 NO_REPEATS_PANE_COUNT = 4;
 
 void setup_pane(const pane_params &pp)
 {
@@ -166,7 +167,7 @@ void show_loading_spinner(std::atomic<bool> &is_loading)
 }
 
 void update_status_bar(ui_state &state, status_bar &sb,
-		       pt::u32 total_line_count)
+		       qt::u32 total_line_count)
 {
 	// left
 	//
@@ -178,9 +179,9 @@ void update_status_bar(ui_state &state, status_bar &sb,
 	std::string vcf_rec_line; // right
 	if (state.current_view == View::PATHS) {
 		auto [a, b] = state.paths_view_range;
-		vcf_rec_line = pv_cmp::format(
-			"| L{} H{} I{} | [{}:{}]", state.selected_line,
-			state.hap_count, total_line_count, a, b);
+		vcf_rec_line = qs::format("| L{} H{} I{} | [{}:{}]",
+					  state.selected_line, state.hap_count,
+					  total_line_count, a, b);
 	}
 
 	sb.draw(state, "", pane_name, vcf_rec_line);
@@ -197,9 +198,9 @@ void update_status_bar(const mto::from_vcf::VCFile &vcf_file, ui_state &state,
 	const std::string &pane_name = pane_names.at(state.active_pane_id);
 
 	// right
-	std::string vcf_rec_line = pv_cmp::format(
-		"{} [{}/{}]", state.selected_line, state.vcf_selected_rec + 1,
-		vcf_file.record_count());
+	std::string vcf_rec_line =
+		qs::format("{} [{}/{}]", state.selected_line,
+			   state.vcf_selected_rec + 1, vcf_file.record_count());
 
 	sb.draw(state, "", pane_name, vcf_rec_line);
 };
@@ -228,7 +229,7 @@ void draw_all_panes(const bd::VG &g, const mto::from_vcf::VCFile &vcf_file,
 		return;
 	}
 
-	pt::u32 rec_idx = top_left_pane.selected_line - 1;
+	qt::u32 rec_idx = top_left_pane.selected_line - 1;
 	bool t = (vcf_file.get_records().at(rec_idx).is_tangled());
 
 	if (t) {
@@ -267,7 +268,7 @@ void update_paths_view(const bd::VG &g, ui_state &state, display_lines &pd,
 
 	pd.reset();
 	zien::components::paths::update_paths(g, state, pd);
-	pt::u32 total_line_count = pd.lines.size();
+	qt::u32 total_line_count = pd.lines.size();
 	update_status_bar(state, sb, total_line_count);
 	state.update_paths_view = false;
 }
@@ -338,7 +339,7 @@ void view_gfa(const bd::VG &g)
 		// Updates dependent panes if necessary
 		update_paths_view(g, state, f->pd, sb);
 		f->draw(state);
-		pt::u32 total_line_count = f->pd.lines.size();
+		qt::u32 total_line_count = f->pd.lines.size();
 		update_status_bar(state, sb, total_line_count);
 
 		refresh(); // Push all changes to the physical terminal
@@ -348,7 +349,7 @@ void view_gfa(const bd::VG &g)
 }
 
 void view(const bd::VG &g, const mto::from_vcf::VCFile &vcf_file,
-	  const std::vector<pt::u32> &invalid_recs)
+	  const std::vector<qt::u32> &invalid_recs)
 {
 	tui_context tc;
 	ui_state &state = tc.get_state();
