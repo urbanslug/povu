@@ -139,7 +139,7 @@ void gen_vcf_rec_map(const std::vector<pvst::Tree> &pvsts, bd::VG &g,
 	qt::u32 total_chunks = (N + CHUNK_SIZE - 1) / CHUNK_SIZE;
 
 	if (app_config.verbosity() > 0)
-		log_info("Processing chunks. Chunk count: {}", total_chunks);
+		log_info("Processing chunks. Chunk count: %u", total_chunks);
 
 	ise::pin_cushion pc;
 	std::vector<ia::trek> treks;

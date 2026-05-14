@@ -461,7 +461,7 @@ public:
 #ifdef DEBUG
 		log_info("povu is in debug mode");
 #endif
-		std::cerr << "CLI parameters:\n";
+		log_info("CLI parameters:");
 
 		/* common for all tasks */
 		std::cerr << spc << "task: " << this->task << "\n";
