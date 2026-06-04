@@ -126,6 +126,25 @@ using slice = slice_t;
 
 } // namespace quilt::types
 
+// ============================================================================
+// HASH SPECIALIZATION FOR STD::UNORDERED_SET / MAP
+// ============================================================================
+namespace std
+{
+template <typename T>
+struct hash<quilt::types::unordered_pair<T>> {
+	std::size_t
+	operator()(const quilt::types::unordered_pair<T> &up) const noexcept
+	{
+		std::size_t h1 = std::hash<T>{}(up.a_);
+		std::size_t h2 = std::hash<T>{}(up.b_);
+
+		// Combining hashes with a bitwise mix
+		return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+	}
+};
+} // namespace std
+
 // NOLINTNEXTLINE(misc-unused-alias-decls)
 namespace qt = quilt::types;
 

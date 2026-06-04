@@ -2,9 +2,10 @@
 #define MZ_MATRIX_POOL_JOINT_HPP
 
 #include <cstddef>
+#include <cstring>
 #include <vector>
 
-#include "quilt/types.hpp"
+#include <quilt/types.hpp>
 
 namespace meza::pool::joint
 {
@@ -25,62 +26,7 @@ struct full_view;
  */
 template <typename T>
 struct joint_pool {
-private:
-	std::size_t free_;
-	std::size_t used_ = 0;
-	std::size_t start_ = 0; // position of the start of the free region
-	std::size_t capacity_ = 0;
-
-	std::vector<T> data_;
-
-	// -----------
-	// constructor
-	// -----------
-
-	// N is the number of elements in the pool
-	explicit joint_pool(std::size_t N)
-	    : data_(N, T{}), free_(N), capacity_(N)
-	{}
-
-	void extend_pool()
-	{
-		std::size_t new_capacity = capacity_ * 2;
-		data_.resize(new_capacity, T{});
-		free_ += (new_capacity - capacity_);
-		capacity_ = new_capacity;
-	}
-
-	std::size_t alloc(std::size_t need)
-	{
-		if (!can_allocate(need))
-			extend_pool();
-
-		std::size_t alloc_start = start_;
-		start_ += need;
-		used_ += need;
-		free_ -= need;
-
-		return alloc_start; // return the starting index of the
-				    // allocated block
-	}
-
 public:
-	// -----------
-	// constructor
-	// -----------
-
-	static joint_pool<T> init(std::size_t N)
-	{
-		return joint_pool<T>{N};
-	}
-
-	full_view<T> alloc_full(qt::u32 I, qt::u32 J)
-	{
-		std::size_t need = static_cast<std::size_t>(I) * J;
-		std::size_t start_idx = alloc(need);
-		return full_view<T>{this, start_idx, I, J};
-	}
-
 	// -------
 	// getters
 	// -------
@@ -129,26 +75,83 @@ public:
 	// modifiers
 	// ---------
 
-	void clear()
-	{
-		std::fill(data_.begin(), data_.end(), T{});
-		reset();
-	}
-
 	void reset()
 	{
 		free_ = data_.size();
 		used_ = 0;
 		start_ = 0;
 	}
+
+	void clear()
+	{
+		qt::u32 N = this->used() * sizeof(T);
+		std::memset(data_.data(), T{}, N);
+		reset();
+	}
+
+	// -----------
+	// constructor
+	// -----------
+
+	static joint_pool<T> init(std::size_t N)
+	{
+		return joint_pool<T>{N};
+	}
+
+	full_view<T> alloc_full(qt::u32 I, qt::u32 J)
+	{
+		std::size_t need = static_cast<std::size_t>(I) * J;
+		std::size_t start_idx = alloc(need);
+		return full_view<T>{this, start_idx, I, J};
+	}
+
+private:
+	std::size_t free_;
+	std::size_t used_ = 0;
+	std::size_t start_ = 0; // position of the start of the free region
+	std::size_t capacity_ = 0;
+
+	std::vector<T> data_;
+
+	// -----------
+	// constructor
+	// -----------
+
+	// N is the number of elements in the pool
+	explicit joint_pool(std::size_t N)
+	    : data_(N, T{}), free_(N), capacity_(N)
+	{}
+
+	void extend_pool()
+	{
+		std::size_t new_capacity = capacity_ * 2;
+		data_.resize(new_capacity, T{});
+		free_ += (new_capacity - capacity_);
+		capacity_ = new_capacity;
+	}
+
+	std::size_t alloc(std::size_t need)
+	{
+		if (!can_allocate(need))
+			extend_pool();
+
+		std::size_t alloc_start = start_;
+		start_ += need;
+		used_ += need;
+		free_ -= need;
+
+		// return the starting index of the allocated block
+		return alloc_start;
+	}
 };
 
 /**
- * a matrix view that uses a joint pool for storage. The matrix does not own
- * the data, but rather holds a reference to the pool and an index into the
- * pool where its data starts. This allows us to have multiple matrices that
- * share the same underlying storage, which can be more efficient in terms of
- * memory usage and allocation overhead.
+ * A matrix view that uses a joint pool for storage.
+ * The matrix does not own the data, but rather holds a reference to the pool
+ * and an index into the pool where its data starts.
+ * This allows us to have multiple matrices that share the same underlying
+ * storage, which can be more efficient in terms of memory usage and allocation
+ * overhead.
  *
  * Note: this is a simple implementation and does not include any bounds
  * checking

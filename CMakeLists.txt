@@ -185,11 +185,14 @@ add_compile_options_for_build_type(oza)
 # TARGET LINKING & DEPENDENCY GRAPH
 # ==============================================================================
 
+find_package(OpenMP REQUIRED)
+find_package(TBB REQUIRED)
+
 target_link_libraries(liteseq PRIVATE log)
 
 target_link_libraries(quilt PUBLIC log fmt::fmt)
 
-target_link_libraries(meza PUBLIC log quilt)
+target_link_libraries(meza PUBLIC log quilt tbb OpenMP::OpenMP_CXX)
 
 target_link_libraries(oza PRIVATE fmt::fmt liteseq quilt meza log)
 

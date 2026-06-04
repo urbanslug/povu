@@ -1,6 +1,8 @@
 #ifndef ITA_AT_MATRIX_HPP
 #define ITA_AT_MATRIX_HPP
 
+#include <cstddef>
+#include <future>   // for future
 #include <map>	    // for map
 #include <optional> // for optional, nullopt, nullopt_t
 #include <thread>   // for thread
@@ -20,6 +22,7 @@
 namespace ita::at_matrix
 {
 using meza::pool::ov_mat_t;
+// using meza::pool::hap_comp::haps_comp_set;
 using pool_t = meza::pool::pool<qt::u8, qt::u32>;
 
 struct hap2loop {
@@ -53,6 +56,8 @@ struct mat3 {
 	ov_mat_t ref;
 	ov_mat_t filter;
 	ov_mat_t xor_result;
+
+	// std::future<haps_comp_set> hap_cmp_future;
 
 	qt::u32 j_offset = 0; // TODO: rename to pool j offset
 	qt::u32 I = 0;
@@ -253,7 +258,9 @@ public:
 	void add(rov_job &&w)
 	{
 		items.emplace_back(std::move(w));
-		std::thread([&]() { comp_meta(items.size() - 1); }).detach();
+
+		comp_meta(items.size() - 1);
+		// std::thread([&]() { comp_meta(items.size() - 1); }).detach();
 	}
 };
 

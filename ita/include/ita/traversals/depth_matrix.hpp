@@ -13,19 +13,7 @@ namespace ita::depth_matrix
 using pool_t = meza::pool::pool<qt::u8, qt::u32>;
 
 struct depth_matrix {
-private:
-	bool tangled_ = false;
-	qt::u32 max_depth_ = 0;
-	meza::pool::joint::full_view<qt::u32> view;
-
 public:
-	// -----------
-	// constructor
-	// -----------
-
-	depth_matrix(meza::pool::joint::full_view<qt::u32> &&v) : view(v)
-	{}
-
 	// -------
 	// getters
 	// -------
@@ -84,6 +72,18 @@ public:
 	{
 		tangled_ = tangled;
 	}
+
+	// -----------
+	// constructor
+	// -----------
+
+	depth_matrix(meza::pool::joint::full_view<qt::u32> &&v) : view(v)
+	{}
+
+private:
+	bool tangled_ = false;
+	qt::u32 max_depth_ = 0;
+	meza::pool::joint::full_view<qt::u32> view;
 };
 
 depth_matrix comp_depth_matrix(const bd::VG &g, const ir::RoV *rov, pool_t &p);

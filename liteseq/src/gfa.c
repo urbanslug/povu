@@ -41,7 +41,6 @@ DEFINE_ENUM_AND_STRING(gfa_version, GFA_VERSION_ITEMS)
  * GFA Parse Functions
  * -------------------
  */
-
 status_t set_version(const char *h_line, const char *newline, gfa_props *g)
 {
 	char *tokens[EXPECTED_H_LINE_TOKENS] = {NULL};
@@ -65,7 +64,6 @@ status_t set_version(const char *h_line, const char *newline, gfa_props *g)
 	}
 
 	char *version_str = tokens[H_LINE_VERSION_IDX];
-	char *nl = strchr(version_str, NEWLINE);
 	g->version = from_string_gfa_version(version_str);
 	if (g->version == gfa_version_INVALID) {
 		log_fatal("Unsupported GFA version: %s", version_str);
@@ -303,9 +301,8 @@ status_t populate_gfa(gfa_props *gfa)
 		return FAILURE; // Failed to create thread for S lines
 
 	// res = pop_l(&thread_l, &l_meta);
-	if (pthread_create(&thread_l, NULL, t_handle_l, (void *)&l_meta) != 0) {
+	if (pthread_create(&thread_l, NULL, t_handle_l, (void *)&l_meta) != 0)
 		return FAILURE; // Failed to create thread for L lines
-	}
 
 	if (gfa->inc_refs) {
 		if (pthread_create(&thread_p, NULL, t_handle_p,

@@ -16,9 +16,9 @@
 namespace meza::view
 {
 
-// -----
+// ------------
 // type aliases
-// -----
+// ------------
 
 template <typename T>
 using full_matrix = meza::view::full::full<T>;
@@ -26,9 +26,9 @@ using full_matrix = meza::view::full::full<T>;
 template <typename T>
 using rr_matrix = meza::view::repeated_row::repeated_row<T>;
 
-// -----
+// ----------------
 // metadata structs
-// -----
+// ----------------
 
 template <typename U>
 struct col_names {

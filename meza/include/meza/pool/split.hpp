@@ -73,7 +73,7 @@ public:
 			  T{});
 		std::fill(xor_start_ptr(), xor_start_ptr() + xor_used, T{});
 
-		reset();
+		this->reset();
 	}
 
 	[[nodiscard]] size_t empty() const
@@ -226,7 +226,7 @@ public:
 	explicit matrix_pool(size_t N) : capacity_(N)
 	{
 		host_storage_ = new T[N];
-		reset();
+		this->reset();
 	}
 
 	/**
@@ -237,6 +237,12 @@ public:
 	{
 		std::size_t bytes = space_mb * 1024 * 1024;
 		std::size_t elements{bytes / sizeof(T)};
+		return matrix_pool{elements};
+	}
+
+	static matrix_pool create(std::size_t capacity)
+	{
+		std::size_t elements{capacity / sizeof(T)};
 		return matrix_pool{elements};
 	}
 

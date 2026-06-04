@@ -126,31 +126,26 @@ struct pansn *try_extract_pansn_from_str(const char *name, const char delim)
 	if (res != SUCCESS)
 		return free_pansn_buf(out_tokens);
 
-	if (p.tokens_found != PANSN_MAX_TOKENS) {
+	if (p.tokens_found != PANSN_MAX_TOKENS)
 		return free_pansn_buf(out_tokens);
-	}
 
 	idx_t offset = 0;
 	int sample_idx = PANSN_SAMPLE_COL - offset;
 	int contig_idx = PANSN_CONTIG_NAME_COL - offset;
 	int hap_id_idx = PANSN_HAP_ID_COL - offset;
 
-	for (int i = 0; i < PANSN_MAX_TOKENS; i++) {
-		if (strlen(out_tokens[i]) == 0) {
+	for (int i = 0; i < PANSN_MAX_TOKENS; i++)
+		if (strlen(out_tokens[i]) == 0)
 			return free_pansn_buf(out_tokens);
-		}
-	}
 
 	char *endptr;
 
 	strtoul(out_tokens[hap_id_idx], &endptr, 10);
-	if (*endptr != NULL_CHAR) {
+	if (*endptr != NULL_CHAR)
 		return free_pansn_buf(out_tokens);
-	}
 
-	if (strchr(out_tokens[contig_idx], delim) != NULL) {
+	if (strchr(out_tokens[contig_idx], delim) != NULL)
 		return free_pansn_buf(out_tokens);
-	}
 
 	const char **o = (const char **)out_tokens;
 	struct pansn *pn = alloc_pansn(o);
@@ -165,7 +160,8 @@ struct pansn *try_create_pansn(const char **id_tokens, idx_t token_count,
 	if (token_count == 1) {
 		const char *ref_name = id_tokens[PANSN_SAMPLE_COL];
 		return try_extract_pansn_from_str(ref_name, DELIM);
-	} else if (token_count == 3) {
+	}
+	else if (token_count == 3) {
 		return alloc_pansn(id_tokens);
 	}
 
@@ -190,7 +186,8 @@ struct ref_id *alloc_ref_id(const char **id_tokens, idx_t token_count)
 			destroy_pansn(&pn);
 			return NULL;
 		}
-	} else {
+	}
+	else {
 		r_id->type = REF_ID_RAW;
 		r_id->value.raw = strdup(id_tokens[PANSN_SAMPLE_COL]);
 		if (!r_id->value.raw) {
@@ -227,8 +224,8 @@ void destroy_ref_id(struct ref_id **r_id)
 			free((*r_id)->value.id_value);
 			(*r_id)->value.id_value = NULL;
 		}
-
-	} else if ((*r_id)->type == REF_ID_RAW) {
+	}
+	else if ((*r_id)->type == REF_ID_RAW) {
 		if ((*r_id)->value.raw != NULL) {
 			free((*r_id)->value.raw);
 			(*r_id)->value.raw = NULL;

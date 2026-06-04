@@ -16,10 +16,14 @@
 #include "ita/traversals/depth_matrix.hpp" // for comp_depth_matrix
 #include "ita/variation/rov.hpp"	   // for RoV
 
+#include "log/log.h"
+#include <chrono>
+#include <cstdlib>
+
 namespace ita::convolutions
 {
 namespace lq = liteseq;
-using meza::pool::hap_comp::haps_comp_set;
+// using meza::pool::hap_comp::haps_comp_set;
 
 using pool_t = meza::pool::pool<qt::u8, qt::u32>;
 
@@ -42,12 +46,13 @@ void process_mat3(
 
 		const ita::at_matrix::hap2loop &h2l = mat_set.h2l;
 
-		const haps_comp_set &hap_cmp =
-			p.hap_compare(filter_mat, pool_offset);
+		p.hap_compare(filter_mat, pool_offset);
 
 		std::optional<ia::trek> opt_tk = ita::trip::gen_trip(
 			g, rov, is_tangled, ref_h_idx, h2l, hap_itns, mat_set,
-			sorted_vertices, hap_cmp);
+			sorted_vertices, p);
+
+		p.clear_hap_cmp_data();
 
 		if (!opt_tk.has_value())
 			continue;
@@ -95,7 +100,10 @@ void populate_trips(const bd::VG &g, const ir::RoV *rov,
 	ita::depth_matrix::depth_matrix dm =
 		ita::depth_matrix::comp_depth_matrix(g, rov, p);
 
-	// loads data from the depth matrix into
+	// loads data from the depth matrix into the pool and generates mat3
+	// items for the batch will be processed when:
+	//   - the pool is full
+	//   - when drain is true
 	ita::at_matrix::init_pool(g, rov, to_call_ref_ids, dm, p, batch);
 }
 

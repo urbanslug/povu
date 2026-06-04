@@ -3,7 +3,6 @@
 
 #include <cstddef>
 
-// #include "meza/ops/ops.hpp"
 #include "meza/pool/hap_comp.hpp"
 #include "meza/pool/joint.hpp"
 #include "meza/pool/pool_ops.hpp"
@@ -14,9 +13,6 @@
 #include "meza/pool/hap_comp.cuh"
 #include "meza/pool/split_cuda.cuh"
 #endif
-
-// #include <chrono>
-// #include <iostream>
 
 namespace meza::pool
 {
@@ -30,19 +26,40 @@ using namespace meza::pool::joint;    // for joint_pool
 template <typename T, typename S>
 struct pool {
 public:
-	meza::pool::hap_comp::haps_comp_set
-	hap_compare(const meza::pool::ov_mat_t &filter_mat, qt::u32 pool_offset)
+	void hap_compare(const meza::pool::ov_mat_t &filter_mat,
+			 qt::u32 pool_offset)
 	{
-		meza::pool::hap_comp::haps_comp_set cmp_set;
+		// meza::pool::hap_comp::haps_comp_set cmp_set;
 #if MEZA_USE_CUDA
 		cmp_mat_cuda.base_mut().set_filter(&filter_mat, pool_offset);
 		cmp_set =
 			meza::pool_ops::handle_set(mat_pool_cuda, cmp_mat_cuda);
 #else
 		cmp_mat_cpu.set_filter(&filter_mat, pool_offset);
-		cmp_set = meza::pool_ops::handle_set(mat_pool_cpu, cmp_mat_cpu);
+		meza::pool_ops::handle_set(mat_pool_cpu, cmp_mat_cpu);
 #endif
-		return cmp_set;
+		// return cmp_set;
+	}
+
+	const hap_comp_matrix<S> &get_hap_comp_matrix() const
+	{
+		return cmp_mat_cpu;
+	}
+
+	// [[nodiscard]] std::size_t hap_cmp_count() const
+	// {
+	//	return cmp_mat_cpu.hap_cmp_count();
+	// }
+
+	// [[nodiscard]] inline qt::up_t<qt::u32> comp_rm_idx(std::size_t i)
+	// const
+	// {
+	//	return cmp_mat_cpu.comp_rm_idx(i);
+	// }
+
+	void clear_hap_cmp_data()
+	{
+		cmp_mat_cpu.clear_hap_cmp_data();
 	}
 
 	void run_convolutions(qt::u32 pool_j_offset)
@@ -109,28 +126,10 @@ public:
 
 	/* ================= constructor ============== */
 
-	/*
-	 * u8
-	 * --------
-	 * 1 byte per u8 value
-	 * 1024*1024 = 1,048,576 u8 values are
-	 *
-	 * u32
-	 * --------
-	 * 4 bytes per u32 value
-	 * (1024*1024) / 4 = 262,144
-	 * 262144 u32 values are ~1M
-	 * 1024 values of u32 are 1M
-	 * 2,621,440 u32 values are ~10M
-	 */
-	pool(std::size_t split_pool_size_mb = 512,		  //
-	     std::size_t hap_comp_elements = 50ull * 1024 * 1024, // 50M items
-	     std::size_t joint_pool_size = 10ull * 1024 * 1024 // 10M elements
-	     )
-	    : mat_pool_cpu(matrix_pool<T>::create_from_megabytes(
-		      split_pool_size_mb)),				  //
-	      cmp_mat_cpu(hap_comp_matrix<T>::create(hap_comp_elements)), //
-	      joint_pool_cpu(joint_pool<S>::init(joint_pool_size))	  //
+	pool(std::size_t sp_sz, std::size_t hc_sz, std::size_t jp_sz, u32 H)
+	    : mat_pool_cpu(matrix_pool<T>::create(sp_sz)),
+	      cmp_mat_cpu(hap_comp_matrix<S>::create(hc_sz, H)),
+	      joint_pool_cpu(joint_pool<S>::init(jp_sz))
 #if MEZA_USE_CUDA
 	      ,
 	      mat_pool_cuda(mat_pool_cpu),
@@ -140,12 +139,12 @@ public:
 
 private:
 	meza::pool::matrix_pool<T> mat_pool_cpu;
-	meza::pool::hap_comp::hap_comp_matrix<T> cmp_mat_cpu;
+	meza::pool::hap_comp::hap_comp_matrix<S> cmp_mat_cpu;
 	meza::pool::joint::joint_pool<S> joint_pool_cpu;
 
 #if MEZA_USE_CUDA
 	meza::pool::matrix_pool_cuda<T> mat_pool_cuda;
-	meza::pool::hap_comp::hap_comp_matrix_cuda<T> cmp_mat_cuda;
+	meza::pool::hap_comp::hap_comp_matrix_cuda<S> cmp_mat_cuda;
 #endif
 };
 

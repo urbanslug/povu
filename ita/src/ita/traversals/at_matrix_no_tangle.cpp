@@ -21,16 +21,16 @@ constexpr meza::pool::pool_region region_filter =
 
 constexpr meza::pool::pool_region region_xor = meza::pool::pool_region::Xor;
 
-void populate_filter2(const ita::depth_matrix::depth_matrix &dm,
-		      ov_mat_t &filter_mat)
+void populate_filter(const ita::depth_matrix::depth_matrix &dm,
+		     ov_mat_t &filter_mat)
 {
 	auto [src_ptr, len] = dm.get_slice();
 
 	filter_mat.copy_slice(src_ptr, len);
 }
 
-void populate_ref2(const qt::u32 I, const qt::u32 J, qt::u32 ref_i,
-		   const ita::depth_matrix::depth_matrix &dm, ov_mat_t &ref_mat)
+void populate_ref(const qt::u32 I, const qt::u32 J, qt::u32 ref_i,
+		  const ita::depth_matrix::depth_matrix &dm, ov_mat_t &ref_mat)
 {
 	auto [src_ptr, len] = dm.get_slice();
 	qt::u32 ref_row = ref_i * J; // offset
@@ -62,8 +62,8 @@ void from_no_tangle(const ir::RoV *rov,
 
 		qt::u32 filter_size = filter_mat.base().size();
 
-		populate_filter2(dm, filter_mat);
-		populate_ref2(I, J, ref_h_idx, dm, ref_mat);
+		populate_filter(dm, filter_mat);
+		populate_ref(I, J, ref_h_idx, dm, ref_mat);
 
 		mat3 m{std::move(ref_mat),
 		       std::move(filter_mat),
@@ -76,6 +76,7 @@ void from_no_tangle(const ir::RoV *rov,
 
 		j.add_item(ref_h_idx, std::move(item));
 		qt::u32 offset = batch.get_pool_j_offset() + filter_size;
+
 		batch.set_pool_j_offset(offset);
 	}
 

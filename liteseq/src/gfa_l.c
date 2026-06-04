@@ -38,7 +38,7 @@ status_t handle_l(const char *l_line, u32 line_len, size_t idx, char **tokens,
 {
 	struct split_str_params p = {
 		.str = l_line,
-		.up_to = NULL,
+		.up_to = l_line + line_len,
 		.delimiter = TAB_CHAR,
 		.fallbacks = "",
 		.fallback_chars_count = 0,

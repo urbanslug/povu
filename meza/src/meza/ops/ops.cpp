@@ -13,7 +13,7 @@ void cpu_mat_xor(const u8 *a, const u8 *b, u8 *c, u32 N)
 		c[i] = a[i] ^ b[i];
 }
 
-void cpu_haps_sum(const u8 *d_f, u8 *d_out, u32 mat_off, u32 col_shift,
+void cpu_haps_sum(const u8 *d_f, u32 *d_out, u32 mat_off, u32 col_shift,
 		  u32 res_shift, u32 len)
 {
 	for (u32 i{}; i < len; i++) {
@@ -22,7 +22,7 @@ void cpu_haps_sum(const u8 *d_f, u8 *d_out, u32 mat_off, u32 col_shift,
 	}
 }
 
-void cpu_haps_xor(const u8 *d_f, u8 *d_out, u32 mat_off, u32 col_shift,
+void cpu_haps_xor(const u8 *d_f, u32 *d_out, u32 mat_off, u32 col_shift,
 		  u32 res_shift, u32 len)
 {
 	for (u32 i{}; i < len; i++) {

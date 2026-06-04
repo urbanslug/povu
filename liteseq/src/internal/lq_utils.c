@@ -67,24 +67,25 @@ struct match_result {
 		NULL, -1, false                                                \
 	}
 
-const char *strchr_bounded(const char *start, char delim)
+const char *strchr_bounded(const char *start, const char *up_to, char delim)
 {
 	const char *curr = start;
-	while (true) {
+	while (curr <= up_to) {
 		if (*curr == delim || *curr == '\0' || *curr == '\n')
 			return curr;
+
 		curr++;
 	}
 
 	return NULL;
 }
 
-struct match_result find_delim(const char *start, char c,
+struct match_result find_delim(const char *start, const char *up_to, char c,
 			       const char *fallback_chars,
 			       int fallback_chars_count)
 {
 	// Locate the position of the token
-	const char *res = strchr_bounded(start, c);
+	const char *res = strchr_bounded(start, up_to, c);
 	if (res != NULL)
 		return (struct match_result){res, (int)(res - start), false};
 
@@ -100,73 +101,6 @@ struct match_result find_delim(const char *start, char c,
 	}
 
 	return NULL_MACTH_RES;
-}
-
-status_t split_str2(struct split_str_params *p)
-{
-	const char *str = p->str;
-	const char *up_to = p->up_to;
-	const char c = p->delimiter;
-	const char *fallbacks = p->fallbacks;
-	idx_t fallback_chars_count = p->fallback_chars_count;
-	idx_t max_tokens = p->max_splits;
-	char **all_tokens = p->tokens;
-
-	idx_t tokens_found = 0;
-	int len = 0;
-
-	bool limit_reached = false;
-
-	int len_read = 0;
-	int max_len = p->up_to - p->str;
-
-	while (len != -1 && tokens_found < max_tokens) {
-		struct match_result match_res =
-			find_delim(str, c, fallbacks, fallback_chars_count);
-		len = match_res.len;
-
-		if (len == -1)
-			break;
-
-		len_read += len + 1;
-
-		if (up_to != NULL && match_res.delim_ptr > up_to) {
-			limit_reached = true;
-			len = (int)(up_to - str);
-		}
-
-		if (len <= 0)
-			break;
-
-		char *tok = malloc(sizeof(char) * len + 1);
-		if (tok == NULL) {
-			log_error("Memory allocation failed\n");
-			return ERROR_CODE_FAILURE;
-		}
-
-		memcpy(tok, str, len);
-		tok[len] = '\0';
-
-		if (len_read > max_len) {
-			log_error("Attempted to read past the up_to limit\n");
-			return ERROR_CODE_FAILURE;
-		}
-		else if (max_len == 13371958) {
-			printf("%s\n", tok);
-			log_info("%d", len_read);
-		}
-
-		all_tokens[tokens_found++] = tok;
-
-		str += len + 1;
-		if (match_res.at_fallback || limit_reached)
-			break;
-	}
-
-	p->tokens_found = tokens_found;
-	p->end = str;
-
-	return SUCCESS;
 }
 
 status_t split_str(struct split_str_params *p)
@@ -185,8 +119,8 @@ status_t split_str(struct split_str_params *p)
 	bool limit_reached = false;
 
 	while (len != -1 && tokens_found < max_tokens) {
-		struct match_result match_res =
-			find_delim(str, c, fallbacks, fallback_chars_count);
+		struct match_result match_res = find_delim(
+			str, up_to, c, fallbacks, fallback_chars_count);
 		len = match_res.len;
 
 		if (len == -1)
@@ -226,6 +160,7 @@ idx_t count_digits(idx_t num)
 {
 	if (num == 0)
 		return 1;
+
 	return (idx_t)log10(num) + 1;
 }
 

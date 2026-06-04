@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstdlib>
+#include <iostream>
 #include <set>
 
 #include <quilt/types.hpp>
@@ -15,10 +16,10 @@ using qt::up_t;
 
 void cpu_mat_xor(const u8 *a, const u8 *b, u8 *c, u32 N);
 
-void cpu_haps_sum(const u8 *d_f, u8 *d_out, u32 mat_off, u32 col_shift,
+void cpu_haps_sum(const u8 *d_f, u32 *d_out, u32 mat_off, u32 col_shift,
 		  u32 res_shift, u32 len);
 
-void cpu_haps_xor(const u8 *d_f, u8 *d_out, u32 mat_off, u32 col_shift,
+void cpu_haps_xor(const u8 *d_f, u32 *d_out, u32 mat_off, u32 col_shift,
 		  u32 res_shift, u32 len);
 
 /**
@@ -27,12 +28,12 @@ void cpu_haps_xor(const u8 *d_f, u8 *d_out, u32 mat_off, u32 col_shift,
  * v: input vector of length len, will be modified in-place to contain the
  * prefix sums
  * v[i] = v[0] + v[1] + ... + v[i]
- * len: length of the input vector
+ * N: length of the input vector
  */
 template <typename T>
-void prefix_sum_cpu(T *v, std::size_t len)
+void prefix_sum_cpu(T *v, std::size_t N)
 {
-	for (std::size_t i{1}; i < len; ++i)
+	for (std::size_t i{1}; i < N; ++i)
 		v[i] = v[i] + v[i - 1];
 }
 

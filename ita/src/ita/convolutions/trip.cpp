@@ -5,23 +5,26 @@
 #include <set>	     // for std::set
 #include <vector>    // for std::vector
 
-#include <liteseq/refs.h> // for ref_walk, ref
-#include <log/log.h>
+#include <liteseq/refs.h>		  // for ref_walk, ref
+#include <log/log.h>			  // for log_info, log_warn
 #include <meza/pool/hap_comp.hpp>	  // for haps_comp_set
 #include <meza/pool/split_pool_types.hpp> // for ov_mat_t
 #include <quilt/types.hpp>		  // for qt
 
 #include "ita/traversals/at_matrix.hpp" // for matrix_pool, rov_matrix_set
 
+// #include <cstddef>
 // #include "quilt/types.hpp"
 
 namespace ita::trip
 {
 namespace lq = liteseq;
 using meza::pool::ov_mat_t;
+using qt::u32, qt::u8, qt::op_t;
+
 using mat_context_t = qt::op_t<qt::u32>;
 using graph_context_t = qt::op_t<qt::u32>;
-using meza::pool::hap_comp::haps_comp_set;
+// using meza::pool::hap_comp::haps_comp_set;
 
 // map of context to the set of hap indexes with that context as a variant
 using cxt_idx_t = std::map<mat_context_t, std::set<qt::u32>>;
@@ -175,6 +178,7 @@ cxt_idx_t find_variant_mat_contexts(const ita::at_matrix::mat3 &mat_set,
 	for (qt::u32 h_idx : variant_refs) {
 		std::vector<mat_context_t> contexts =
 			find_row_context(ref_mat, xor_mat, h_idx);
+
 		for (mat_context_t &c : contexts)
 			index[c].insert(h_idx);
 		// index.add_mat_context(h_idx, std::move(c));
@@ -308,14 +312,9 @@ gen_trip(const bd::VG &g, const ir::RoV *rov, bool is_tangled,
 	 qt::u32 ref_h_idx, const ita::at_matrix::hap2loop &h2l,
 	 const std::vector<ita::traversals::traversals::itinerary> &hap_itns,
 	 const ita::at_matrix::mat3 &mat_set,
-	 const std::vector<qt::u32> &sorted_vertices,
-	 const haps_comp_set &hap_cmp)
+	 const std::vector<qt::u32> &sorted_vertices, pool_t &p)
 {
 	auto tk = ia::trek::create_new(rov, g.get_hap_count(), is_tangled);
-
-	const std::set<qt::up_t<qt::u32>> &reversals = hap_cmp.reversals;
-	const std::set<qt::up_t<qt::u32>> &matches = hap_cmp.matches;
-	const std::set<qt::up_t<qt::u32>> &mismatches = hap_cmp.mismatches;
 
 	std::set<qt::u32> variant_refs;
 	std::set<qt::u32> matches_ref;
@@ -323,70 +322,34 @@ gen_trip(const bd::VG &g, const ir::RoV *rov, bool is_tangled,
 	// always add the ref hap to the matches_ref
 	matches_ref.insert(ref_h_idx);
 
-	// auto start_t = std::chrono::steady_clock::now();
+	const auto &cmp_mat = p.get_hap_comp_matrix();
 
-	// std::thread t1(
-	//	[&matches, &matches_ref, ref_h_idx]()
-	//	{
-	//		for (auto [ha, hb] : matches) {
-	//			if (ha == ref_h_idx)
-	//				matches_ref.insert(hb);
-	//			else if (hb == ref_h_idx)
-	//				matches_ref.insert(ha);
-	//		}
-	//	});
+	const std::vector<qt::u8> &matches = cmp_mat.get_matches();
+	const std::vector<qt::u8> &mismatches = cmp_mat.get_mismatches();
+	const std::vector<qt::u8> &reversals = cmp_mat.get_reversals();
 
-	// std::thread t2(
-	//	[&mismatches, &variant_refs, ref_h_idx]()
-	//	{
-	//		for (auto [ha, hb] : mismatches) {
-	//			if (ha == ref_h_idx)
-	//				variant_refs.insert(hb);
-	//			else if (hb == ref_h_idx)
-	//				variant_refs.insert(ha);
-	//		}
-	//	});
+	for (auto [k, k_off] : cmp_mat.get_hap_comparable()) {
+		qt::u32 i = cmp_mat.comp_rm_idx(k, k_off);
+		auto [ha, hb] = cmp_mat.comp_hap_pair(k, k_off);
 
-	for (auto [ha, hb] : matches) {
-		if (ha == ref_h_idx)
-			matches_ref.insert(hb);
-		else if (hb == ref_h_idx)
-			matches_ref.insert(ha);
+		if (matches[i]) {
+			if (ha == ref_h_idx)
+				matches_ref.insert(hb);
+			else if (hb == ref_h_idx)
+				matches_ref.insert(ha);
+		}
+		else if (mismatches[i]) {
+			if (ha == ref_h_idx)
+				variant_refs.insert(hb);
+			else if (hb == ref_h_idx)
+				variant_refs.insert(ha);
+		}
 	}
 
-	for (auto [ha, hb] : mismatches) {
-		if (ha == ref_h_idx)
-			variant_refs.insert(hb);
-		else if (hb == ref_h_idx)
-			variant_refs.insert(ha);
-	}
-
-	// auto end_t = std::chrono::steady_clock::now();
-	// auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-	//	end_t - start_t);
-	// INFO("Identified matches and mismatches in {} us", elapsed.count());
-
-	// start_t = std::chrono::steady_clock::now();
-
-	// t2.join();
 	cxt_idx_t vci = find_variant_mat_contexts(mat_set, variant_refs);
 
-	// end_t = std::chrono::steady_clock::now();
-	// elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-	//	end_t - start_t);
-	// INFO("Identified variant contexts in {} us", elapsed.count());
-
-	// start_t = std::chrono::steady_clock::now();
-
-	// t1.join();
 	gen_trip(g, vci, ref_h_idx, h2l, hap_itns, sorted_vertices, matches_ref,
 		 mat_set.filter, tk);
-
-	// end_t = std::chrono::steady_clock::now();
-	// elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
-	//	end_t - start_t);
-
-	// INFO("Generated trip in {} us", elapsed.count());
 
 	if (tk.has_data())
 		return tk;
