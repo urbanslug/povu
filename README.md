@@ -60,6 +60,11 @@ For more control, use the separate `decompose` and `call` commands:
 ./bin/povu call -i input.gfa -f regions/ -r ref_list.txt --stdout > output.vcf
 ```
 
+### Datasets
+
+The datasets are hosted in a separate repository, 
+refer to [pang-datasets](https://github.com/urbanslug/pang-datasets).
+
 
 ## Building povu
 
