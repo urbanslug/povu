@@ -332,7 +332,7 @@ gen_trip(const bd::VG &g, const ir::RoV *rov, bool is_tangled,
 		qt::u32 i = cmp_mat.comp_rm_idx(k, k_off);
 		auto [ha, hb] = cmp_mat.comp_hap_pair(k, k_off);
 
-		if (matches[i]) {
+		if (matches[i] || reversals[i]) {
 			if (ha == ref_h_idx)
 				matches_ref.insert(hb);
 			else if (hb == ref_h_idx)
