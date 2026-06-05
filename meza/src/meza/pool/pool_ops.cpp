@@ -42,30 +42,30 @@ void haps_sum_cpu(const meza::pool::matrix_pool<u8> &p,
 				    len);
 }
 
-#if MEZA_USE_CUDA
-void haps_xor_cuda(const meza::pool::matrix_pool_cuda<u8> &p,
-		   meza::pool::hap_comp::hap_comp_matrix_cuda<u32> &cmp_mat,
-		   u32 len, u32 col_shift, u32 res_shift, cudaStream_t stream)
-{
-	const u8 *d_f = p.filter_ptr();
-	u8 *d_out = cmp_mat.d_haps_xor();
-	u32 p_off = cmp_mat.base().pool_offset();
+// #if MEZA_USE_CUDA
+// void haps_xor_cuda(const meza::pool::matrix_pool_cuda<u8> &p,
+//		   meza::pool::hap_comp::hap_comp_matrix_cuda<u32> &cmp_mat,
+//		   u32 len, u32 col_shift, u32 res_shift, cudaStream_t stream)
+// {
+//	const u8 *d_f = p.filter_ptr();
+//	u32 *d_out = cmp_mat.d_haps_xor();
+//	u32 p_off = cmp_mat.base().pool_offset();
 
-	meza::cuda_ops::cuda_haps_xor(d_f, d_out, p_off, col_shift, res_shift,
-				      len, stream);
-}
+//	meza::cuda_ops::cuda_haps_xor(d_f, d_out, p_off, col_shift,
+//	res_shift,			      len, stream);
+// }
 
-void haps_sum_cuda(const meza::pool::matrix_pool_cuda<u8> &p,
-		   meza::pool::hap_comp::hap_comp_matrix_cuda<u8> &cmp_mat,
-		   u32 len, u32 col_shift, u32 res_shift, cudaStream_t stream)
-{
-	const u8 *d_f = p.filter_ptr();
-	u8 *d_out = cmp_mat.d_haps_sum();
-	u32 p_off = cmp_mat.base().pool_offset();
+// void haps_sum_cuda(const meza::pool::matrix_pool_cuda<u8> &p,
+//		   meza::pool::hap_comp::hap_comp_matrix_cuda<u8> &cmp_mat,
+//		   u32 len, u32 col_shift, u32 res_shift, cudaStream_t stream)
+// {
+//	const u8 *d_f = p.filter_ptr();
+//	u32 *d_out = cmp_mat.d_haps_sum();
+//	u32 p_off = cmp_mat.base().pool_offset();
 
-	meza::cuda_ops::cuda_haps_sum(d_f, d_out, p_off, col_shift, res_shift,
-				      len, stream);
-}
-#endif
+//	meza::cuda_ops::cuda_haps_sum(d_f, d_out, p_off, col_shift,
+//	res_shift,			      len, stream);
+// }
+// #endif
 
 } // namespace meza::pool_ops

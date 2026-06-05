@@ -336,7 +336,7 @@ private:
 	/* ================ private data members ====================== */
 
 	// at most ~ 10,000 * 10,000 haps (10M elements)
-	static const std::size_t max_comparisons_ = 100 * 1024 * 1024;
+	static constexpr std::size_t max_comparisons_ = 100 * 1024 * 1024;
 
 	// a reference to the filter matrix
 	const ov_mat_t *filter_ = nullptr;

@@ -185,24 +185,35 @@ add_compile_options_for_build_type(oza)
 # TARGET LINKING & DEPENDENCY GRAPH
 # ==============================================================================
 
-find_package(OpenMP REQUIRED)
-find_package(TBB REQUIRED)
+
+# TBB is only required on non-Apple platforms (like Linux) where we utilize parallel execution
+if(NOT APPLE)
+  find_package(TBB REQUIRED)
+  find_package(Threads REQUIRED)
+endif()
 
 target_link_libraries(liteseq PRIVATE log)
 
 target_link_libraries(quilt PUBLIC log fmt::fmt)
 
-target_link_libraries(meza PUBLIC log quilt tbb OpenMP::OpenMP_CXX)
+# Core dependencies for all platforms
+target_link_libraries(meza PUBLIC log quilt)
+
+# Append performance-scaling libraries on Linux/Windows
+if(NOT APPLE)
+  target_link_libraries(meza PUBLIC TBB::tbb Threads::Threads)
+endif()
 
 target_link_libraries(oza PRIVATE fmt::fmt liteseq quilt meza log)
 
-target_link_libraries(ita PRIVATE log oza fmt::fmt liteseq meza dynamo quilt)
+target_link_libraries(ita PRIVATE fmt::fmt log oza liteseq meza dynamo quilt)
 
-target_link_libraries(mto PRIVATE log oza fmt::fmt liteseq ita meza)
+target_link_libraries(mto PRIVATE fmt::fmt log oza liteseq ita meza)
 
-target_link_libraries(zien PRIVATE log oza ita liteseq fmt::fmt ncurses meza)
+target_link_libraries(zien PRIVATE fmt::fmt log oza ita liteseq ncurses meza)
 
-target_link_libraries(povu PRIVATE log oza zien ita mto liteseq fmt::fmt taywee::args ncurses meza)
+target_link_libraries(povu PRIVATE fmt::fmt log oza zien ita mto liteseq taywee::args ncurses meza)
+
 
 # ==============================================================================
 # OUTPUT & TESTING CONFIGURATION

@@ -1,12 +1,13 @@
 name: Build (Ubuntu Cuda)
 # Test build for Ubuntu with C++17 & CMake
 
-on:
-  # branch glob syntax https://stackoverflow.com/a/57903434
-  push:
-    branches: [ "**" ]
-  pull_request:
-    branches: [ "**" ]
+# Comment out or delete the automatic triggers
+on: []
+#  push:
+#    branches: [ "**" ]
+#  pull_request:
+#    branches: [ "**" ]
+
 
 jobs:
   build:
@@ -25,10 +26,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Print compiler version
+      - name: Install Dependencies
         run: |
-          gcc --version
-          g++ --version
+          sudo apt-get update
+          sudo apt-get install -y libtbb-dev
 
       - name: Setup Cuda
         uses: ./.github/actions/setup-cuda
