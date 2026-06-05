@@ -22,7 +22,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ==============================================================================
 
 # CUDA Support
-option(ENABLE_CUDA "Enable CUDA acceleration" ON)
+option(ENABLE_CUDA "Enable CUDA acceleration" OFF)
 if(ENABLE_CUDA)
   message(STATUS "CUDA support enabled")
   set(MEZA_ENABLE_CUDA ON)
