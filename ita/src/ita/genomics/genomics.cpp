@@ -136,13 +136,13 @@ struct pool_mem_split {
 	 *
 	 */
 
-	std::size_t split_pool = 10ull * 1024 * 1024 * 1024;	  // 10G
-	std::size_t hap_comp = 50ull * 1024 * 1024 * 1024;	  // 50 G
-	std::size_t joint_pool_size = 20ull * 1024 * 1024 * 1024; // 20 G
+	// std::size_t split_pool = 10ull * 1024 * 1024 * 1024;	  // 10G
+	// std::size_t hap_comp = 50ull * 1024 * 1024 * 1024;	  // 50 G
+	// std::size_t joint_pool_size = 20ull * 1024 * 1024 * 1024; // 20 G
 
-	// std::size_t split_pool = 5ull * 1024 * 1024 * 1024;	 // 5 G
-	// std::size_t hap_comp = 5ull * 1024 * 1024 * 1024;	 // 5 G
-	// std::size_t joint_pool_size = 1ull * 1024 * 1024 * 1024; // 1 G
+	std::size_t split_pool = 5ull * 1024 * 1024 * 1024;	 // 5 G
+	std::size_t hap_comp = 5ull * 1024 * 1024 * 1024;	 // 5 G
+	std::size_t joint_pool_size = 1ull * 1024 * 1024 * 1024; // 1 G
 
 	pool_mem_split() = default;
 };

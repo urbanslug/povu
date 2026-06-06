@@ -76,14 +76,11 @@ template <typename T, typename U>
 void run_in_haps_par(const T &p, U &f, meza::pool::comparison_op op)
 {
 	meza::pool::hap_comp::hap_comp_matrix<qt::u32> &cmp_mat = base_mat(f);
-	const auto &b = f.get_filter().base();
-
 	const u32 J = cmp_mat.cols();
-
-	// 1. Create a vector of your 'k' indices to iterate over
 	const std::vector<u32> &ks = cmp_mat.get_valid_ks();
 
-// 2. Run the loop (parallel on Linux/Windows, sequential on Apple)
+	// 2. Run the loop (parallel on Linux/Windows, sequential on Apple)
+
 #if defined(__APPLE__)
 	std::for_each(ks.begin(), ks.end(),
 #else

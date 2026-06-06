@@ -32,8 +32,7 @@ public:
 		// meza::pool::hap_comp::haps_comp_set cmp_set;
 #if MEZA_USE_CUDA
 		cmp_mat_cuda.base_mut().set_filter(&filter_mat, pool_offset);
-		cmp_set =
-			meza::pool_ops::handle_set(mat_pool_cuda, cmp_mat_cuda);
+		meza::pool_ops::handle_set(mat_pool_cuda, cmp_mat_cuda);
 #else
 		cmp_mat_cpu.set_filter(&filter_mat, pool_offset);
 		meza::pool_ops::handle_set(mat_pool_cpu, cmp_mat_cpu);
