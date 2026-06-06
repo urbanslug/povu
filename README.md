@@ -74,7 +74,7 @@ Prerequisites:
 
 **Clone the repository:**
 ```bash
-git clone https://github.com/pangenome/povu.git
+git clone https://github.com/urbanslug/povu.git
 cd povu
 ```
 
