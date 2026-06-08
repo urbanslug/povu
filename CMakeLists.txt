@@ -188,7 +188,6 @@ add_compile_options_for_build_type(oza)
 
 # TBB is only required on non-Apple platforms (like Linux) where we utilize parallel execution
 if(NOT APPLE)
-  find_package(TBB REQUIRED)
   find_package(Threads REQUIRED)
 endif()
 
@@ -201,7 +200,7 @@ target_link_libraries(meza PUBLIC log quilt)
 
 # Append performance-scaling libraries on Linux/Windows
 if(NOT APPLE)
-  target_link_libraries(meza PUBLIC TBB::tbb Threads::Threads)
+  target_link_libraries(meza PUBLIC Threads::Threads)
 endif()
 
 target_link_libraries(oza PRIVATE fmt::fmt liteseq quilt meza log)

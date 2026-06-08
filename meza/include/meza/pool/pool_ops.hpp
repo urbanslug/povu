@@ -79,13 +79,7 @@ void run_in_haps_par(const T &p, U &f, meza::pool::comparison_op op)
 	const u32 J = cmp_mat.cols();
 	const std::vector<u32> &ks = cmp_mat.get_valid_ks();
 
-	// 2. Run the loop (parallel on Linux/Windows, sequential on Apple)
-
-#if defined(__APPLE__)
 	std::for_each(ks.begin(), ks.end(),
-#else
-	std::for_each(std::execution::par, ks.begin(), ks.end(),
-#endif
 		      [&](u32 k)
 		      {
 			      u32 col_shift = k * J;
