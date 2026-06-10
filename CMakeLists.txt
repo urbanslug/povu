@@ -186,7 +186,6 @@ add_compile_options_for_build_type(oza)
 # ==============================================================================
 
 
-# TBB is only required on non-Apple platforms (like Linux) where we utilize parallel execution
 if(NOT APPLE)
   find_package(Threads REQUIRED)
 endif()
