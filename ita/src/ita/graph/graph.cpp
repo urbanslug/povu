@@ -210,7 +210,7 @@ std::list<qt::u32> gen_sort(const bd::VG &g, ir::RoV &rov,
 	laps.reserve(1024);
 
 	// print each lap for each haplotype
-	if (dbg) {
+	if (false && dbg) {
 		for (qt::u32 h_idx{}; h_idx < HAP_COUNT; h_idx++) {
 			laps.clear();
 			find_laps(g, h_idx, start_id, stop_id, laps);
@@ -282,8 +282,7 @@ std::list<qt::u32> gen_sort(const bd::VG &g, ir::RoV &rov,
 				right_cxt[v_id] = y.value();
 			}
 			else
-				log_fatal("v_id %u has no right context",
-					  v_id);
+				log_fatal("v_id %u has no right context", v_id);
 		}
 	};
 
@@ -582,7 +581,7 @@ qt::status_t find_walks(const bd::VG &g, ir::RoV &rov)
 	bool dbg = rov.as_str() == ">1>4" ? true : false;
 
 	// print each lap for each haplotype
-	if (dbg) {
+	if (false && dbg) {
 		auto [l, r, route] = *rov.get_pvst_vtx()->get_route_params();
 		auto [start_id, _] = l;
 		auto [stop_id, __] = r;
@@ -618,7 +617,7 @@ qt::status_t find_walks(const bd::VG &g, ir::RoV &rov)
 	// Attempt to sort with BFS
 	auto sorted_v_ids = bfs_sort(g, rov);
 	if (!sorted_v_ids.empty()) {
-		if (dbg)
+		if (false && dbg)
 			log_info("called 1");
 		rov.add_sort_data(sorted_v_ids.begin(), sorted_v_ids.end());
 		return 0; // Success
@@ -627,7 +626,7 @@ qt::status_t find_walks(const bd::VG &g, ir::RoV &rov)
 	// Fallback: Generate sort data
 	std::list<qt::u32> sw = gen_sort(g, rov, g.get_hap_count(), dbg);
 	if (!sw.empty()) {
-		if (dbg)
+		if (false && dbg)
 			log_info("called 2");
 		rov.add_sort_data(sw.begin(), sw.end());
 		return 0; // Success

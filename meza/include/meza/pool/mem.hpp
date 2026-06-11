@@ -1,11 +1,6 @@
 #ifndef MEZA_MEM_HPP
 #define MEZA_MEM_HPP
 
-// #include "log/log.h"
-// #include <cstddef>
-// #include <iomanip>
-// #include <iostream>
-
 namespace meza::mem
 {
 

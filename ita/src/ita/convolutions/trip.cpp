@@ -13,9 +13,6 @@
 
 #include "ita/traversals/at_matrix.hpp" // for matrix_pool, rov_matrix_set
 
-// #include <cstddef>
-// #include "quilt/types.hpp"
-
 namespace ita::trip
 {
 namespace lq = liteseq;
