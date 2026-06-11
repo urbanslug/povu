@@ -109,11 +109,12 @@ struct pansn *free_pansn_buf(char **out_tokens)
 /* used for PanSN in P lines */
 struct pansn *try_extract_pansn_from_str(const char *name, const char delim)
 {
+	idx_t name_len = strlen(name);
 	char *out_tokens[PANSN_MAX_TOKENS] = {NULL};
 	struct split_str_params p = {
 		// input
 		.str = name,
-		.up_to = NULL,
+		.up_to = name + name_len,
 		.delimiter = delim,
 		.max_splits = PANSN_MAX_TOKENS,
 		.fallbacks = (const char[]){NEWLINE, NULL_CHAR},
