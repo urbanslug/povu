@@ -5,6 +5,7 @@
 
 #include "meza/pool/hap_comp.hpp"
 #include "meza/pool/joint.hpp"
+#include "meza/pool/mem.hpp"
 #include "meza/pool/pool_ops.hpp"
 #include "meza/pool/split.hpp"
 
@@ -18,6 +19,106 @@ namespace meza::pool
 {
 using namespace meza::pool::hap_comp; // for haps_comp_set
 using namespace meza::pool::joint;    // for joint_pool
+
+struct pool_mem_split {
+	/*
+	 * u8
+	 * --------
+	 * 1 byte per u8 value
+	 * 1024*1024 = 1,048,576 u8 values are
+	 *
+	 * u32
+	 * --------
+	 * 4 bytes per u32 value
+	 * (1024*1024) / 4 = 262,144
+	 * 262144 u32 values are ~1M
+	 * 1024 values of u32 are 1M
+	 * 2,621,440 u32 values are ~10M
+	 *
+	 *
+	 * hap comp elements
+	 * 20ull * 1024 * 1024 * 1024 = 20G elements
+	 * 10ull * 1024 * 1024 = 10M elements
+	 *
+	 */
+
+	// std::size_t split_pool = 10ull * 1024 * 1024 * 1024;	  // 10G
+	// std::size_t hap_comp = 50ull * 1024 * 1024 * 1024;	  // 50 G
+	// std::size_t joint_pool_size = 20ull * 1024 * 1024 * 1024; // 20 G
+
+	std::size_t split_pool = 0;	 // 5 G
+	std::size_t hap_comp = 0;	 // 5 G
+	std::size_t joint_pool_size = 0; // 1 G
+
+	pool_mem_split() = delete;
+
+	[[nodiscard]] static inline std::double_t to_g(unsigned long long bytes)
+	{
+		return static_cast<std::double_t>(bytes) / (1024 * 1024 * 1024);
+	}
+
+	void print_split()
+	{
+		log_info("Memory pool split (in GB): Split pool: %.2f G, "
+			 "Hap comp: %.2f G, Joint pool: %.2f G",
+			 to_g(split_pool), to_g(hap_comp),
+			 to_g(joint_pool_size));
+	}
+
+	static pool_mem_split init()
+	{
+		unsigned long long total = meza::mem::get_total_ram();
+		unsigned long long available = meza::mem::get_available_ram();
+
+		unsigned long long min_g = 2ull;
+		unsigned long long min = min_g * 1024 * 1024 * 1024; // 2 G
+
+		if (total < min) {
+			log_fatal("Total RAM %.2fG is less than the minimum "
+				  "required: %uG",
+				  to_g(total), min_g);
+			std::exit(EXIT_FAILURE);
+		}
+
+		// pick the lesser of
+		//  - 10% of total RAM
+		//  - 90% of available RAM
+		unsigned long long target =
+			std::min(total / 10, available * 9 / 10);
+
+		// split target into 3 pools with a 4:4:2 ratio
+		unsigned long long split_pool = target * 4 / 10;
+		unsigned long long hap_comp = target * 4 / 10;
+		unsigned long long joint_pool_size = target * 2 / 10;
+
+		// log_info("Total %2f, Available %.2f", to_g(total),
+		//	 to_g(available));
+		// log_info("Allocating. %.2f  %.2f  %.2f ", to_g(split_pool),
+		//	 to_g(hap_comp), to_g(joint_pool_size));
+
+		// std::cerr << split_pool << " " << hap_comp << " "
+		//	  << joint_pool_size << "\n";
+
+		return pool_mem_split{split_pool, hap_comp, joint_pool_size};
+	}
+
+private:
+	pool_mem_split(unsigned long long sp, unsigned long long hp,
+		       unsigned long long jp)
+	    : split_pool(sp), hap_comp(hp), joint_pool_size(jp)
+	{
+		if (split_pool + hap_comp + joint_pool_size >
+		    meza::mem::get_total_ram()) {
+			log_fatal("Total pool size exceeds total RAM. "
+				  "Split pool: %.2f G, Hap comp: %.2f G, "
+				  "Joint pool: %.2f G, Total RAM: %.2f G",
+				  to_g(split_pool), to_g(hap_comp),
+				  to_g(joint_pool_size),
+				  to_g(meza::mem::get_total_ram()));
+			std::exit(EXIT_FAILURE);
+		}
+	}
+};
 
 /**
  * T for the matrix pool (reference, filter, xor),
@@ -123,6 +224,14 @@ public:
 		return joint_pool_cpu.alloc_full(I, J);
 	}
 
+	static pool init(u32 H)
+	{
+		auto pool_split = pool_mem_split::init();
+		return pool(pool_split.split_pool, pool_split.hap_comp,
+			    pool_split.joint_pool_size, H);
+	}
+
+private:
 	/* ================= constructor ============== */
 
 	pool(std::size_t sp_sz, std::size_t hc_sz, std::size_t jp_sz, u32 H)
@@ -136,7 +245,6 @@ public:
 #endif
 	{}
 
-private:
 	meza::pool::matrix_pool<T> mat_pool_cpu;
 	meza::pool::hap_comp::hap_comp_matrix<S> cmp_mat_cpu;
 	meza::pool::joint::joint_pool<S> joint_pool_cpu;

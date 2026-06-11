@@ -114,39 +114,6 @@ void comp_expeditions(const bd::VG &g, std::vector<ir::RoV> &all_rovs,
 	return;
 }
 
-struct pool_mem_split {
-	/*
-	 * u8
-	 * --------
-	 * 1 byte per u8 value
-	 * 1024*1024 = 1,048,576 u8 values are
-	 *
-	 * u32
-	 * --------
-	 * 4 bytes per u32 value
-	 * (1024*1024) / 4 = 262,144
-	 * 262144 u32 values are ~1M
-	 * 1024 values of u32 are 1M
-	 * 2,621,440 u32 values are ~10M
-	 *
-	 *
-	 * hap comp elements
-	 * 20ull * 1024 * 1024 * 1024 = 20G elements
-	 * 10ull * 1024 * 1024 = 10M elements
-	 *
-	 */
-
-	// std::size_t split_pool = 10ull * 1024 * 1024 * 1024;	  // 10G
-	// std::size_t hap_comp = 50ull * 1024 * 1024 * 1024;	  // 50 G
-	// std::size_t joint_pool_size = 20ull * 1024 * 1024 * 1024; // 20 G
-
-	std::size_t split_pool = 5ull * 1024 * 1024 * 1024;	 // 5 G
-	std::size_t hap_comp = 5ull * 1024 * 1024 * 1024;	 // 5 G
-	std::size_t joint_pool_size = 1ull * 1024 * 1024 * 1024; // 1 G
-
-	pool_mem_split() = default;
-};
-
 void gen_vcf_rec_map(const std::vector<pvst::Tree> &pvsts, bd::VG &g,
 		     const std::set<qt::id_t> &to_call_ref_ids,
 		     bq::bounded_queue<iv::VcfRecIdx> &q,
@@ -182,10 +149,8 @@ void gen_vcf_rec_map(const std::vector<pvst::Tree> &pvsts, bd::VG &g,
 	std::map<qt::u32, std::vector<ia::inv_slice>> inv_slices;
 
 	const u32 H = g.get_hap_count();
-	pool_mem_split pool_split;
-	auto p = meza::pool::pool<qt::u8, qt::u32>(
-		pool_split.split_pool, pool_split.hap_comp,
-		pool_split.joint_pool_size, H);
+
+	auto p = meza::pool::pool<qt::u8, qt::u32>::init(H);
 
 	ita::at_matrix::rov_job_batch batch;
 
