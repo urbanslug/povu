@@ -101,10 +101,11 @@ bd::VG *to_bd(const core::config &app_config)
 
 		vg->set_refs_meta(gfa->refs, ref_count);
 
-		for (qt::idx_t ref_idx{}; ref_idx < ref_count; ref_idx++) {
+#pragma omp parallel for schedule(dynamic)
+		for (qt::idx_t ref_idx = 0; ref_idx < ref_count; ref_idx++) {
 			lq::ref *ref = lq::get_ref(gfa, ref_idx);
 			qt::idx_t N = lq::get_step_count(ref);
-			for (qt::idx_t step_idx{}; step_idx < N; step_idx++) {
+			for (qt::idx_t step_idx = 0; step_idx < N; step_idx++) {
 				qt::id_t v_id = ref->walk->v_ids[step_idx];
 				vg->set_vtx_ref_idx(v_id, ref_idx, step_idx);
 			}

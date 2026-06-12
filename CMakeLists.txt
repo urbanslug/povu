@@ -190,6 +190,8 @@ if(NOT APPLE)
   find_package(Threads REQUIRED)
 endif()
 
+find_package(OpenMP REQUIRED)
+
 target_link_libraries(liteseq PRIVATE log)
 
 target_link_libraries(quilt PUBLIC log fmt::fmt)
@@ -206,7 +208,7 @@ target_link_libraries(oza PRIVATE fmt::fmt liteseq quilt meza log)
 
 target_link_libraries(ita PRIVATE fmt::fmt log oza liteseq meza dynamo quilt)
 
-target_link_libraries(mto PRIVATE fmt::fmt log oza liteseq ita meza)
+target_link_libraries(mto PRIVATE fmt::fmt log oza liteseq ita meza OpenMP::OpenMP_CXX)
 
 target_link_libraries(zien PRIVATE fmt::fmt log oza ita liteseq ncurses meza)
 
