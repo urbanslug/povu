@@ -100,8 +100,9 @@ bd::VG *to_bd(const core::config &app_config)
 			log_info("Adding refs");
 
 		vg->set_refs_meta(gfa->refs, ref_count);
-
+#ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic)
+#endif
 		for (qt::idx_t ref_idx = 0; ref_idx < ref_count; ref_idx++) {
 			lq::ref *ref = lq::get_ref(gfa, ref_idx);
 			qt::idx_t N = lq::get_step_count(ref);

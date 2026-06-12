@@ -180,6 +180,16 @@ endfunction()
 
 add_compile_options_for_build_type(povu)
 add_compile_options_for_build_type(oza)
+add_compile_options_for_build_type(ita)
+add_compile_options_for_build_type(mto)
+add_compile_options_for_build_type(zien)
+#add_compile_options_for_build_type(dynamo)
+add_compile_options_for_build_type(meza)
+add_compile_options_for_build_type(quilt)
+add_compile_options_for_build_type(log)
+add_compile_options_for_build_type(liteseq)
+
+
 
 # ==============================================================================
 # TARGET LINKING & DEPENDENCY GRAPH
@@ -188,9 +198,9 @@ add_compile_options_for_build_type(oza)
 
 if(NOT APPLE)
   find_package(Threads REQUIRED)
+  find_package(OpenMP REQUIRED)
 endif()
 
-find_package(OpenMP REQUIRED)
 
 target_link_libraries(liteseq PRIVATE log)
 
@@ -200,7 +210,7 @@ target_link_libraries(quilt PUBLIC log fmt::fmt)
 target_link_libraries(meza PUBLIC log quilt)
 
 # Append performance-scaling libraries on Linux/Windows
-if(NOT APPLE)
+if(TARGET Threads::Threads)
   target_link_libraries(meza PUBLIC Threads::Threads)
 endif()
 
@@ -208,7 +218,12 @@ target_link_libraries(oza PRIVATE fmt::fmt liteseq quilt meza log)
 
 target_link_libraries(ita PRIVATE fmt::fmt log oza liteseq meza dynamo quilt)
 
-target_link_libraries(mto PRIVATE fmt::fmt log oza liteseq ita meza OpenMP::OpenMP_CXX)
+target_link_libraries(mto PRIVATE fmt::fmt log oza liteseq ita meza)
+
+# Only link OpenMP if the target was actually created
+if(TARGET OpenMP::OpenMP_CXX)
+  target_link_libraries(mto PRIVATE OpenMP::OpenMP_CXX)
+endif()
 
 target_link_libraries(zien PRIVATE fmt::fmt log oza ita liteseq ncurses meza)
 

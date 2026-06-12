@@ -97,8 +97,7 @@ class VariationGraph
 {
 	std::vector<Vertex> vertices;
 	std::set<pgt::side_n_id_t> tips_; // the set of side and id of the tips
-	pu::TwoWayMap<std::size_t, std::size_t>
-		v_id_to_idx_; // TODO: reserve size
+	pu::TwoWayMap<std::size_t, std::size_t> v_id_to_idx_; // TODO: reserve
 
 	std::vector<Edge> edges;
 
