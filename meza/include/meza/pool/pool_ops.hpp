@@ -2,8 +2,6 @@
 #define MEZA_MATRIX_POOL_OPS_HPP
 
 #include <algorithm>
-#include <execution>
-#include <vector>
 
 // #include "log/log.h"
 // #include "meza/ops/ops.hpp"
