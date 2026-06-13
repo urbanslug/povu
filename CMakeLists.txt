@@ -190,18 +190,14 @@ add_compile_options_for_build_type(quilt)
 add_compile_options_for_build_type(log)
 add_compile_options_for_build_type(liteseq)
 
-
-
 # ==============================================================================
 # TARGET LINKING & DEPENDENCY GRAPH
 # ==============================================================================
 
-
 if(NOT APPLE)
   find_package(Threads REQUIRED)
-  find_package(OpenMP REQUIRED)
+  #find_package(OpenMP REQUIRED)
 endif()
-
 
 target_link_libraries(liteseq PRIVATE log)
 
@@ -222,9 +218,9 @@ target_link_libraries(ita PRIVATE fmt::fmt log oza liteseq meza dynamo quilt)
 target_link_libraries(mto PRIVATE fmt::fmt log oza liteseq ita meza)
 
 # Only link OpenMP if the target was actually created
-if(TARGET OpenMP::OpenMP_CXX)
-  target_link_libraries(mto PRIVATE OpenMP::OpenMP_CXX)
-endif()
+#if(TARGET OpenMP::OpenMP_CXX)
+#  target_link_libraries(mto PRIVATE OpenMP::OpenMP_CXX)
+#endif()
 
 target_link_libraries(zien PRIVATE fmt::fmt log oza ita liteseq ncurses meza)
 
